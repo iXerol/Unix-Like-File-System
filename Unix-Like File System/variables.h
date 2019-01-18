@@ -2,7 +2,7 @@
 #define variables_h
 
 #include <stdio.h>
-#include "superblock.h"
+#include "structs.h"
 
 FILE* disk;
 

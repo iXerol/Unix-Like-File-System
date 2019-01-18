@@ -2,8 +2,6 @@
 #define file_h
 
 #include "functions.h"
-#include "superblock.h"
-#include "variables.h"
 
 void new_volume() {
     disk = fopen(FILENAME, "wb+");
@@ -39,7 +37,7 @@ void mount_volume() {
         fread(&superblock, sizeof(struct superblock_t), 1, disk);
 
         for (unsigned int i = 0; i < INODE_NUM; ++i) {
-            fseek(disk, INODE_START_BLOCK, SEEK_SET);
+            fseek(disk, INODE_BLOCK_START, SEEK_SET);
             fread(inodes, INODE_SIZE, 1, disk);
         }
 
@@ -47,6 +45,17 @@ void mount_volume() {
         strcpy(current_user, "root");
         strcpy(current_group, "root");
     }
+}
+
+void save() {
+    fseek(disk, BLOCK_SIZE, SEEK_SET);
+    fwrite(&superblock, sizeof(superblock), 1, disk);
+
+    for (int i = 0; i < INODE_NUM; ++i) {
+        write_inode(i);
+    }
+
+    fclose(disk);
 }
 
 #endif /* file_h */

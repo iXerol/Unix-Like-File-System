@@ -1,5 +1,5 @@
-#ifndef inode_h
-#define inode_h
+#ifndef structs_h
+#define structs_h
 #include <time.h>
 #include "consts.h"
 
@@ -16,4 +16,22 @@ struct inode_t {
     time_t accessed_time;        //文件創建時間
 };
 
-#endif /* inode_h */
+struct superblock_t {
+    unsigned int num_free_inode;
+
+    unsigned int num_free_block;
+
+    unsigned short umask;
+
+    uint64_t free_inodes;
+
+    unsigned int free_block_stack[100];
+    size_t stack_size;
+};
+
+struct child_file_t {
+    char filename[FILE_NAME_LENGTH];
+    unsigned int inode_number;
+};
+
+#endif /* structs_h */

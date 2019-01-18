@@ -12,8 +12,17 @@ const unsigned short NADDR = 6;
 //block 大小
 const size_t BLOCK_SIZE = 512;
 
-//文件最大大小
-const size_t MAX_FILE_SIZE = (NADDR - 2) * BLOCK_SIZE + BLOCK_SIZE / sizeof(uint32_t) * BLOCK_SIZE + BLOCK_SIZE / sizeof(uint32_t) * BLOCK_SIZE / sizeof(uint32_t) * BLOCK_SIZE;
+//索引數據塊中存儲最大塊數
+const unsigned int NADDR_BLOCK = BLOCK_SIZE / sizeof(unsigned int);
+
+//直接索引最大文件大小
+const size_t MAX_DIRECT_FILE_SIZE = (NADDR - 2) * BLOCK_SIZE;
+
+//一級間接索引最大文件大小
+const size_t MAX_LEVEL_1_FILE_SIZE = MAX_DIRECT_FILE_SIZE + NADDR_BLOCK * BLOCK_SIZE;
+
+//（二級間接索引）最大文件大小
+const size_t MAX_FILE_SIZE = MAX_LEVEL_1_FILE_SIZE + NADDR_BLOCK * NADDR_BLOCK * BLOCK_SIZE;
 
 //block 数量
 const unsigned int BLOCK_NUM = 256;
@@ -25,10 +34,10 @@ const size_t INODE_SIZE = 128;
 const unsigned int INODE_NUM = 64;
 
 //inode 起始盤塊
-const unsigned int INODE_START_BLOCK = 3;
+const unsigned int INODE_BLOCK_START = 2;
 
 //数据起始盤塊
-const unsigned int DATA_START_BLOCK = INODE_START_BLOCK + INODE_NUM * INODE_SIZE / BLOCK_SIZE;
+const unsigned int DATA_BLOCK_START = INODE_BLOCK_START + INODE_NUM * INODE_SIZE / BLOCK_SIZE;
 
 //文件名最大长度
 const size_t FILE_NAME_LENGTH = 32 - sizeof(unsigned int);
