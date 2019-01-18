@@ -1,15 +1,14 @@
-//
-//  main.c
-//  Unix-Like File System
-//
-//  Created by Xerol Wong on 2019/01/13.
-//  Copyright © 2019 Xerol Wong. All rights reserved.
-//
-
 #include <stdio.h>
+#include "inode.h"
+#include "file.h"
+#include "functions.h"
 
 int main(int argc, const char * argv[]) {
-	// insert code here...
-	printf("Hello, World!\n");
-	return 0;
+    printf("%lu\n%lu\n%lu\n", sizeof(struct superblock_t), sizeof(struct inode_t), sizeof(struct child_file_t));
+    if (fopen(FILENAME, "r")) {
+        mount_volume();
+    } else {
+        new_volume();
+    }
+    return 0;
 }

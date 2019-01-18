@@ -25,6 +25,14 @@
 /* Begin PBXFileReference section */
 		842A679D21EADDA200EB7E2E /* Unix-Like File System */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Unix-Like File System"; sourceTree = BUILT_PRODUCTS_DIR; };
 		842A67A021EADDA200EB7E2E /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		846D6FBB21ED3DAB0091311F /* commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
+		846D6FBC21ED499D0091311F /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
+		846D6FBD21ED7E230091311F /* superblock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = superblock.h; sourceTree = "<group>"; };
+		84719FF221F10F50006D5190 /* directory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = directory.h; sourceTree = "<group>"; };
+		847923CC21EFBE8E00D4FB99 /* functions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = functions.h; sourceTree = "<group>"; };
+		847923CD21EFC7C400D4FB99 /* variables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variables.h; sourceTree = "<group>"; };
+		84A84EA921ED1CEA00D79AD0 /* consts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = consts.h; sourceTree = "<group>"; };
+		84A84EAA21ED1DFA00D79AD0 /* inode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = inode.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +66,14 @@
 			isa = PBXGroup;
 			children = (
 				842A67A021EADDA200EB7E2E /* main.c */,
+				84A84EAA21ED1DFA00D79AD0 /* inode.h */,
+				846D6FBD21ED7E230091311F /* superblock.h */,
+				847923CD21EFC7C400D4FB99 /* variables.h */,
+				84719FF221F10F50006D5190 /* directory.h */,
+				846D6FBC21ED499D0091311F /* file.h */,
+				847923CC21EFBE8E00D4FB99 /* functions.h */,
+				846D6FBB21ED3DAB0091311F /* commands.h */,
+				84A84EA921ED1CEA00D79AD0 /* consts.h */,
 			);
 			path = "Unix-Like File System";
 			sourceTree = "<group>";
