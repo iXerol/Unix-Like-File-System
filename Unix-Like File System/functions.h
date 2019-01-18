@@ -102,10 +102,7 @@ void create_root() {
 }
 
 struct inode_t* get_inode_by_num(unsigned int n) {
-    struct inode_t* inode = NULL;
-    fseek(disk, BLOCK_SIZE * 3 + INODE_SIZE * n, SEEK_SET);
-    fread(inode, sizeof(struct inode_t), 1, disk);
-    return inode;
+    return inodes + n;
 }
 
 unsigned int get_free_inode() {
@@ -186,7 +183,7 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path)
 
     }
 
-    
+
     return find_file_from_parent(working_directory, path);
 }
 
