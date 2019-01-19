@@ -37,13 +37,13 @@ struct inode_t* find_parent(struct inode_t* working_directory, char* path);
 
 void show() {
     printf("free data block stack size: %zu\n", superblock.stack_size);
-    printf("free data block stack: ");
+    printf("free data block stack:");
     for (int i = 0; i < superblock.stack_size; ++i) {
-        printf("%d ", superblock.free_block_stack[i]);
+        printf(" %d", superblock.free_block_stack[i]);
     }
-    printf("\n\nfree inode number: ");
+    printf("\n\nfree inode number: %u\ninodes:", superblock.num_free_inode);
     for (int i = 0; i < INODE_NUM; ++i) {
-        printf("%d ", (superblock.free_inodes & (1 << i)) > 0);
+        printf(" %d", (superblock.free_inodes & ((uint64_t)(1) << i)) != 0 ? i : -1);
     }
     printf("\n");
 }
@@ -56,7 +56,6 @@ void initialize_superblock() {
     superblock.umask = DEFAULT_UMASK;
 
     superblock.free_inodes = UINT64_MAX;
-//    printf("Successfully initialized superblock.\n");
 }
 
 void initialize_inodes() {
@@ -64,7 +63,6 @@ void initialize_inodes() {
     for (int i = 0; i < INODE_NUM; ++i) {
         inodes[i].number = i;
     }
-//    printf("Successfully initialized inodes.\n");
 }
 
 void initialize_data_block() {
@@ -73,7 +71,7 @@ void initialize_data_block() {
     unsigned int num_data_block = BLOCK_NUM - DATA_BLOCK_START;
     unsigned int i;
     superblock.stack_size = 100;
-    for (i = 1; i <= 100; ++i) {
+    for (i = 0; i < 100; ++i) {
         superblock.free_block_stack[i] = i;
     }
     fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
@@ -84,16 +82,15 @@ void initialize_data_block() {
         }
         if (stack_size < 100) {
             free_block_stack[stack_size] = free_block_stack[0];
-            free_block_stack[0] = 0;
+            free_block_stack[0] = BLOCK_NUM;
             ++stack_size;
         }
         fwrite(&stack_size, sizeof(size_t), 1, disk);
         fwrite(free_block_stack, sizeof(unsigned int), stack_size, disk);
-        if (free_block_stack[0] != 0) {
+        if (free_block_stack[0] != BLOCK_NUM) {
             fseek(disk, (free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         }
     }
-//    printf("Successfully initialized datablocks.\n");
 }
 
 void write_inode(int n) {
@@ -107,12 +104,10 @@ void create_root() {
     strcpy(inodes[0].user, "system");
     strcpy(inodes[0].group, "system");
     inodes[0].mode = 01644;
-    superblock.free_inodes = superblock.free_inodes ^ (1 << 0);
+    superblock.free_inodes = superblock.free_inodes ^ (1 << get_free_inode());
 
     link_file(get_inode_by_num(0), ".", "/");
     link_file(get_inode_by_num(0), "..", "/");
-
-//    printf("Successfully created root directory.\n");
 }
 
 void read_data(struct inode_t* inode, char* data) {
@@ -171,8 +166,14 @@ struct inode_t* get_inode_by_num(unsigned int n) {
 }
 
 unsigned int get_free_inode() {
+    if (superblock.num_free_inode == 0) {
+        printf("There is no enough inodes to create file.\n");
+        return INODE_NUM;
+    }
     for (unsigned int i = 0; i < INODE_NUM; ++i) {
         if ((superblock.free_inodes & (1 << i)) != 0 ) {
+            --superblock.num_free_inode;
+            superblock.free_inodes ^= (1 << i);
             return i;
         }
     }
@@ -183,8 +184,9 @@ unsigned int get_free_data_block() {
     unsigned int free_data_block;
     if (superblock.stack_size > 1) {
         --superblock.stack_size;
+        --superblock.num_free_block;
         free_data_block = superblock.free_block_stack[superblock.stack_size];
-    } else if (superblock.free_block_stack[0] != 0){
+    } else if (superblock.free_block_stack[0] != BLOCK_NUM){
         fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(&superblock.stack_size, sizeof(size_t), 1, disk);
         fread(superblock.free_block_stack, sizeof(unsigned int), superblock.stack_size, disk);
@@ -192,6 +194,7 @@ unsigned int get_free_data_block() {
         --superblock.stack_size;
         free_data_block = superblock.free_block_stack[superblock.stack_size];
     } else {
+        printf("There is no enough space to create file.\n");
         return BLOCK_NUM;   //磁盤容量不足
     }
     return free_data_block;
@@ -203,6 +206,7 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
     struct inode_t* target_parent = find_parent(working_directory, target_file_path);
     char* last_slash = strrchr(target_file_path, '/');
     char target_file_name[FILE_NAME_LENGTH];
+    get_file_name(target_file_path, target_file_name);
     if (last_slash == NULL) {
         strrchr(source_file_path, '/');
     }
@@ -228,9 +232,14 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
     if (writing_block < NADDR - 2) {
         if (writing_position == 0) {
             target_parent->data_address[writing_block] = get_free_data_block();
+            if (target_parent->data_address[writing_block] == BLOCK_NUM) {
+                return;
+            }
         }
         fseek(disk, (target_parent->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
         fwrite(&new_link_file, sizeof(struct child_file_t), 1, disk);
+        target_parent->size += sizeof(struct child_file_t);
+        ++target_parent->link_count;
     }
 }
 
