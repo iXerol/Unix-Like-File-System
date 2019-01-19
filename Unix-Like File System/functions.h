@@ -3,6 +3,7 @@
 
 #include "variables.h"
 #include "path.h"
+#include <stdlib.h>
 
 void show(void);
 
@@ -24,7 +25,7 @@ unsigned int get_free_inode(void);
 
 unsigned int get_free_data_block(void);
 
-void link_file(struct inode_t* working_directory, char* source_file_path, char* target_file_path);
+void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
 struct inode_t* find_file_from_parent(struct inode_t* directory, char *filename);
 
@@ -72,7 +73,7 @@ void initialize_data_block() {
     unsigned int num_data_block = BLOCK_NUM - DATA_BLOCK_START;
     unsigned int i;
     superblock.stack_size = 100;
-    for (i = 0; i < 100; ++i) {
+    for (i = 1; i <= 100; ++i) {
         superblock.free_block_stack[i] = i;
     }
     fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
@@ -108,8 +109,8 @@ void create_root() {
     inodes[0].mode = 01644;
     superblock.free_inodes = superblock.free_inodes ^ (1 << 0);
 
-//    link_file(get_inode_by_num(0), ".", "/");
-//    link_file(get_inode_by_num(0), "..", "/");
+    link_file(get_inode_by_num(0), ".", "/");
+    link_file(get_inode_by_num(0), "..", "/");
 
 //    printf("Successfully created root directory.\n");
 }
@@ -196,7 +197,8 @@ unsigned int get_free_data_block() {
     return free_data_block;
 }
 
-void link_file(struct inode_t* working_directory, char* source_file_path, char* target_file_path) {
+
+void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     struct inode_t* source_file = find_file_by_path(working_directory, source_file_path);
     struct inode_t* target_parent = find_parent(working_directory, target_file_path);
     char* last_slash = strrchr(target_file_path, '/');
@@ -210,40 +212,45 @@ void link_file(struct inode_t* working_directory, char* source_file_path, char* 
     } else if (target_parent == NULL) {
         printf("ln: %s: No such file or directory\n", target_file_path);
         return;
-    } else if (find_file_by_path(working_directory, target_file_path) != NULL) {
+    } else if (find_file_from_parent(target_parent, target_file_name) != NULL) {
         printf("ln: %s: File exists\n", target_file_path);
         return;
     }
-    unsigned short writing_disk = (unsigned short)(working_directory->size / BLOCK_SIZE);
+
+    struct child_file_t new_link_file;
+    strcpy(new_link_file.filename, target_file_name);
+    new_link_file.inode_number = source_file->number;
+
+    unsigned short writing_block = (unsigned short)(working_directory->size / BLOCK_SIZE);
     size_t writing_position =working_directory->size % BLOCK_SIZE;
 
     //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
-    if (writing_disk < NADDR - 2) {
-        fseek(disk, (working_directory->data_address[writing_disk] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
-
-
-
-
-
+    if (writing_block < NADDR - 2) {
+        if (writing_position == 0) {
+            target_parent->data_address[writing_block] = get_free_data_block();
+        }
+        fseek(disk, (target_parent->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
+        fwrite(&new_link_file, sizeof(struct child_file_t), 1, disk);
     }
 }
 
 
 struct inode_t *find_file_from_parent(struct inode_t* directory, char *filename) {
-    struct child_file_t child_file;
-    if (directory->size < (NADDR - 2) * BLOCK_SIZE) {
-        for (int i = 2; i < (directory->size / sizeof(size_t)); ++i) {
-            fseek(disk, (directory->data_address[i * sizeof(size_t) / BLOCK_SIZE] + DATA_BLOCK_START) * BLOCK_SIZE + (i * sizeof(size_t) % BLOCK_SIZE), SEEK_SET);
-            fread(&child_file, sizeof(unsigned short), 1, disk);
-            if (strcmp(child_file.filename, filename) == 0) {
-                return get_inode_by_num(child_file.inode_number);
-            }
-        }
+    if (filename == NULL) {
+        return NULL;
+    } else if (strchr(filename, '/') != NULL) {
+        return find_file_by_path(directory, filename);
     }
 
+    char *data = (char *)malloc(directory->size);
+    read_data(directory, data);
+    struct child_file_t* directory_content = (struct child_file_t*)data;
 
-/* 需要用到一級/二級映射時*/
-
+    for (int i = 0; i < directory->size / sizeof(struct child_file_t); ++i) {
+        if (strcmp(directory_content[i].filename, filename) == 0) {
+            return get_inode_by_num(directory_content[i].inode_number);
+        }
+    }
 
     return NULL;
 }
@@ -254,20 +261,27 @@ void create_directory(struct inode_t *parent_directory, char *dictionary_name) {
 }
 
 struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path) {
-    int index = 0, length = 0;
+    char child_file[FILE_NAME_LENGTH] = "";
+    char child_path[128] = "";
     if (path[0] == '/') {
         working_directory = get_inode_by_num(0);
-        index = 1;
+        split_relative_path(path + 1, child_file, child_path);
+    } else {
+        split_relative_path(path, child_file, child_path);
     }
-    while (path[index + length] != '/') {
-
+    while (working_directory != NULL && strlen(child_file) != 0) {
+        working_directory = find_file_from_parent(working_directory, child_file);
+        strcpy(path, child_path);
+        split_relative_path(path, child_file, child_path);
     }
-
-
-    return find_file_from_parent(working_directory, path);
+    return working_directory;
 }
 
 struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
+    if (path == NULL) {
+        return NULL;
+        //若 path 為空指針，則將 filename 置為空串
+    }
     char* last_slash = strrchr(path, '/');
     if (last_slash) {
         char parent_path[strlen(last_slash)];
