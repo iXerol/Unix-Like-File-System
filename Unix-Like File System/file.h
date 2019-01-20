@@ -43,8 +43,8 @@ void mount_volume() {
         fread(&superblock, sizeof(struct superblock_t), 1, disk);
 
         for (unsigned int i = 0; i < INODE_NUM; ++i) {
-            fseek(disk, INODE_BLOCK_START, SEEK_SET);
-            fread(inodes, INODE_SIZE, 1, disk);
+            fseek(disk, INODE_BLOCK_START * BLOCK_SIZE + INODE_SIZE * i, SEEK_SET);
+            fread(inodes + i, sizeof(struct inode_t), 1, disk);
         }
 
         current_working_inode = get_inode_by_num(0);

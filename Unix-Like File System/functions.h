@@ -25,15 +25,15 @@ unsigned int get_free_inode(void);
 
 unsigned int get_free_data_block(void);
 
-void link_file(struct inode_t* working_directory, const char* target_file_path, const char* source_file_path);
+void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
-struct inode_t* find_file_from_parent(struct inode_t* directory, const char* filename);
+struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename);
 
-void create_directory(struct inode_t* working_directory, const char* directory_path);
+void create_directory(struct inode_t* working_directory, char* directory_path);
 
 struct inode_t* find_file_by_path(struct inode_t* current_inode, char* path);
 
-struct inode_t* find_parent(struct inode_t* working_directory, const char* path);
+struct inode_t* find_parent(struct inode_t* working_directory, char* path);
 
 void show() {
     printf("free data block stack size: %zu\n", superblock.stack_size);
@@ -208,7 +208,7 @@ void return_data_block(unsigned int n) {
 
 }
 
-void link_file(struct inode_t* working_directory, const char* target_file_path, const char* source_file_path) {
+void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     if (target_file_path == NULL || source_file_path == NULL) {
         return;
     }
@@ -251,7 +251,7 @@ void link_file(struct inode_t* working_directory, const char* target_file_path, 
     }
 }
 
-void create_directory(struct inode_t* working_directory, const char* directory_path) {
+void create_directory(struct inode_t* working_directory, char* directory_path) {
 
 
     if (working_directory == NULL || directory_path == NULL) {
@@ -308,13 +308,11 @@ void create_directory(struct inode_t* working_directory, const char* directory_p
             link_file(working_directory, dot_path, directory_name);
             strcat(dot_path, ".");
             link_file(working_directory, dot_path, ".");
-
-            current_working_inode = inode;
         }
     }
 }
 
-struct inode_t *find_file_from_parent(struct inode_t* directory, const char* filename) {
+struct inode_t *find_file_from_parent(struct inode_t* directory, char* filename) {
     if (filename == NULL || directory == NULL || directory->mode / 01000 != ISDIR / 01000) {
         return NULL;
     } else if (strchr(filename, '/') != NULL) {
@@ -363,7 +361,7 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path)
     return working_directory;
 }
 
-struct inode_t* find_parent(struct inode_t* working_directory, const char* path) {
+struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
     if (path == NULL) {
         return NULL;
         //若 path 為空指針，則將 filename 置為空串
@@ -401,10 +399,10 @@ void present_working_directory() {
         if (strcmp(directory_content[i].filename, "..") == 0) {
             worked_directory = working_directory;
             working_directory = get_inode_by_num(directory_content[i].inode_number);
-//            break;
+            break;
         }
     }
-    while (working_directory->number != worked_directory->number) {
+    while (working_directory->number != 0) {
         read_data(working_directory, data);
         for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
             if (directory_content[i].inode_number == worked_directory->number) {
@@ -412,46 +410,60 @@ void present_working_directory() {
                 strcat(working_directory_string, directory_content[i].filename);
                 strcat(working_directory_string, worked_directory_string);
                 strcpy(worked_directory_string, working_directory_string);
-//                break;
+                break;
             }
         }
         directory_content = (struct child_file_t*)data;
         for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-//            printf("filename: %s\ninode number: %u\n", directory_content[i].filename, directory_content[i].inode_number);
             if (strcmp(directory_content[i].filename, "..") == 0) {
                 worked_directory = working_directory;
                 working_directory = get_inode_by_num(directory_content[i].inode_number);
-//                break;
+                break;
             }
         }
     }
-//    read_data(working_directory, data);
-//    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-//        if (directory_content[i].inode_number == worked_directory->number) {
-//            strcpy(working_directory_string, "/");
-//            strcat(working_directory_string, directory_content[i].filename);
-//            strcat(working_directory_string, worked_directory_string);
-//            strcpy(worked_directory_string, working_directory_string);
-////            break;
-//        }
-//    }
+    read_data(working_directory, data);
+    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+        if (directory_content[i].inode_number == worked_directory->number) {
+            strcpy(working_directory_string, "/");
+            strcat(working_directory_string, directory_content[i].filename);
+            strcat(working_directory_string, worked_directory_string);
+            strcpy(worked_directory_string, working_directory_string);
+//            break;
+        }
+    }
 
     printf("%s\n", working_directory_string);
 }
 
-//void status(struct inode_t* directory, char* path) {
-//    if (path == NULL) {
-//        path = (char*)malloc(10);
-//        strcpy(path, "/");
-//    }
-//    struct inode_t* inode = find_file_by_path(directory, path);
-//    if (inode == NULL) {
-//        printf("stat: %s: stat: No such file or directory\n", path);
-//    } else {
-//        printf("File: %s\n", path);
-//        printf("Size: %zu\n", inode->size);
-//        printf("Permission: %c%c%c%c%c%c%c%c%c%c\n", , )
-//    }
-//}
+void status(struct inode_t* directory, char* path) {
+    if (path == NULL) {
+        path = (char*)malloc(10);
+        strcpy(path, "/");
+    }
+    struct inode_t* inode = find_file_by_path(directory, path);
+    if (inode == NULL) {
+        printf("stat: %s: stat: No such file or directory\n", path);
+    } else {
+        printf("File: %s\n", path);
+        printf("Size: %zu\n", inode->size);
+        printf("Permission: ");
+        if (inode->mode / 01000 == ISREG / 01000) {
+            printf("-");
+        } else if (inode->mode / 01000 == ISDIR / 01000) {
+            printf("d");
+        } else if (inode->mode / 01000 == ISISLNK / 01000) {
+            printf("l");
+        }
+        printf("%c%c%c%c%c%c%c%c%c\n", (inode->mode & IRUSR) != 0 ? 'r' : '-', (inode->mode & IWUSR) != 0 ? 'w' : '-', (inode->mode & IXUSR) != 0 ? 'x' : '-',(inode->mode & IRGRP) != 0 ? 'r' : '-', (inode->mode & IWGRP) != 0 ? 'w' : '-', (inode->mode & IXGRP) != 0 ? 'x' : '-', (inode->mode & IROTH) != 0 ? 'r' : '-', (inode->mode & IWOTH) != 0 ? 'w' : '-', (inode->mode & IXOTH) != 0 ? 'x' : '-');
+        printf("User: %s\n", inode->user);
+        printf("Group: %s\n", inode->group);
+        printf("Created Time: %s", asctime(localtime(&inode->created_time)));
+        printf("Last Modified Time: %s", asctime(localtime(&inode->modified_time)));
+        printf("Last Accessed Time: %s", asctime(localtime(&inode->accessed_time)));
+        printf("inode number: %u\n", inode->number);
+        printf("Link Count: %u\n", inode->link_count);
+    }
+}
 
 #endif /* functions_h */
