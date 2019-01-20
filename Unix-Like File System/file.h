@@ -28,7 +28,6 @@ void new_volume() {
 
         create_directory(root, "/etc");
         create_directory(root, "/etc/test");
-        create_directory(root, "/abc/test");
 
     }
 }

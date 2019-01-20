@@ -9,6 +9,7 @@ int main(int argc, const char * argv[]) {
     }
     show();
 
+    present_working_directory();
     save();
     return 0;
 }

@@ -106,6 +106,9 @@ void create_root() {
     inodes[0].mode = ISDIR + MAX_DIRECTORY_PERMISSION - superblock.umask;
     superblock.free_inodes = superblock.free_inodes ^ (1 << get_free_inode());
 
+    current_working_inode = get_inode_by_num(0);
+    strcpy(current_working_directory, "/");
+
     link_file(get_inode_by_num(0), ".", "/");
     link_file(get_inode_by_num(0), "..", "/");
 }
@@ -200,6 +203,13 @@ unsigned int get_free_data_block() {
     return free_data_block;
 }
 
+void return_inode(unsigned int n) {
+
+}
+
+void return_data_block(unsigned int n) {
+
+}
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     if (target_file_path == NULL || source_file_path == NULL) {
@@ -281,6 +291,7 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
             if (writing_position == 0) {
                 working_directory->data_address[writing_block] = get_free_data_block();
                 if (working_directory->data_address[writing_block] == BLOCK_NUM) {
+                    return_inode(inode->number);
                     return;
                 }
             }
@@ -294,6 +305,8 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
             link_file(working_directory, dot_path, directory_name);
             strcat(dot_path, ".");
             link_file(working_directory, dot_path, ".");
+
+            current_working_inode = inode;
         }
     }
 }
@@ -363,6 +376,61 @@ struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
         strncpy(parent_path, path, strlen(path) - strlen(last_slash));
         return find_file_by_path(working_directory, parent_path);
     }
+}
+
+void present_working_directory() {
+    if (current_working_inode->number == 0) {
+        printf("/\n");
+        return;
+    }
+
+    struct inode_t* working_directory = current_working_inode;
+    struct inode_t* worked_directory = current_working_inode;
+    char* working_directory_string = (char*)malloc((FILE_NAME_LENGTH + 1) * INODE_NUM);
+    char* worked_directory_string = (char*)malloc((FILE_NAME_LENGTH + 1) * INODE_NUM);
+    char* data = (char*)malloc(sizeof(struct child_file_t) * INODE_NUM);
+
+    read_data(working_directory, data);
+    struct child_file_t* directory_content = (struct child_file_t*)data;
+    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+        if (strcmp(directory_content[i].filename, "..") == 0) {
+            worked_directory = working_directory;
+            working_directory = get_inode_by_num(directory_content[i].inode_number);
+            break;
+        }
+    }
+    while (working_directory->number != 0) {
+        read_data(working_directory, data);
+        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+            if (directory_content[i].inode_number == worked_directory->number) {
+                strcpy(working_directory_string, "/");
+                strcat(working_directory_string, directory_content[i].filename);
+                strcat(working_directory_string, worked_directory_string);
+                strcpy(worked_directory_string, working_directory_string);
+                break;
+            }
+        }
+        directory_content = (struct child_file_t*)data;
+        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+            if (strcmp(directory_content[i].filename, "..") == 0) {
+                worked_directory = working_directory;
+                working_directory = get_inode_by_num(directory_content[i].inode_number);
+                break;
+            }
+        }
+    }
+    read_data(working_directory, data);
+    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+        if (directory_content[i].inode_number == worked_directory->number) {
+            strcpy(working_directory_string, "/");
+            strcat(working_directory_string, directory_content[i].filename);
+            strcat(working_directory_string, worked_directory_string);
+            strcpy(worked_directory_string, working_directory_string);
+            break;
+        }
+    }
+
+    printf("%s\n", working_directory_string);
 }
 
 #endif /* functions_h */
