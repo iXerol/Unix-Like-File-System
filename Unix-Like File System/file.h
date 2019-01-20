@@ -19,12 +19,17 @@ void new_volume() {
             write_inode(i);
         }
 
+        strcpy(current_user, "system");
+        strcpy(current_group, "system");
+
         create_root();
 
+        struct inode_t* root = get_inode_by_num(0);
 
-        //for test
-        strcpy(current_user, "root");
-        strcpy(current_group, "root");
+        create_directory(root, "/etc");
+        create_directory(root, "/etc/test");
+        create_directory(root, "/abc/test");
+
     }
 }
 

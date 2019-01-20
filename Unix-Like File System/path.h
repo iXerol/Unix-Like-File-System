@@ -1,7 +1,22 @@
 #ifndef path_h
 #define path_h
 
+#include <stdlib.h>
 #include <string.h>
+
+void remove_tail_slashes(char* new_path, char* path) {
+    if (path == NULL || new_path == NULL) {
+        return;
+    }
+    strcpy(new_path, "");
+    size_t i;
+    for (i = strlen(path); i > 0; --i) {
+        if (path[i- 1] != '/') {
+            break;
+        }
+    }
+    strncpy(new_path, path, i);
+}
 
 void get_file_name(char* path, char* filename) {
     if (path == NULL) {
@@ -9,10 +24,12 @@ void get_file_name(char* path, char* filename) {
         return;
         //若 path 為空指針，則將 filename 置為空串
     }
-    char* last_slash = strrchr(path, '/');
+    char* new_path = (char*)malloc(strlen(path));
+    remove_tail_slashes(new_path, path);
+    char* last_slash = strrchr(new_path, '/');
     if (last_slash == NULL) {
-        if (strlen(path) > 0) {
-            strcpy(filename, path);
+        if (strlen(new_path) > 0) {
+            strcpy(filename, new_path);
             //若 path 中無‘/’，則直接拷貝 path 至 filename
         } else {
             strcpy(filename, "");

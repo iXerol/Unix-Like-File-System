@@ -52,10 +52,10 @@ const size_t USER_PASSWORD_LENGTH = 32;
 const size_t GROUP_NAME_LENGTH = 32;
 
 //文件最大权限
-const unsigned short MAX_PERMISSION = 0777;
+const unsigned short MAX_FILE_PERMISSION = 0777;
 
 //目录最大权限
-const unsigned short MAX_OWNER_PERMISSION = 0666;
+const unsigned short MAX_DIRECTORY_PERMISSION = 0666;
 
 //默认umask(0022)
 const unsigned short DEFAULT_UMASK = 0022;
