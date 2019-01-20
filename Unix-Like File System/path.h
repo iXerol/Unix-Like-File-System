@@ -4,32 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-void remove_tail_slashes(char* new_path, char* path) {
-    if (path == NULL || new_path == NULL) {
-        return;
-    }
-    strcpy(new_path, "");
-    size_t i;
-    for (i = strlen(path); i > 0; --i) {
-        if (path[i- 1] != '/') {
-            break;
-        }
-    }
-    strncpy(new_path, path, i);
-}
-
-void get_file_name(char* path, char* filename) {
+void get_file_name(const char* path, char* filename) {
     if (path == NULL) {
         strcpy(filename, "");
         return;
         //若 path 為空指針，則將 filename 置為空串
     }
-    char* new_path = (char*)malloc(strlen(path));
-    remove_tail_slashes(new_path, path);
-    char* last_slash = strrchr(new_path, '/');
+    char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
-        if (strlen(new_path) > 0) {
-            strcpy(filename, new_path);
+        if (strlen(path) > 0) {
+            strcpy(filename, path);
             //若 path 中無‘/’，則直接拷貝 path 至 filename
         } else {
             strcpy(filename, "");
@@ -43,7 +27,7 @@ void get_file_name(char* path, char* filename) {
     }
 }
 
-void split_relative_path(char* path, char* child, char* child_path) {
+void split_relative_path(const char* path, char* child, char* child_path) {
     if (path == NULL) {
         strcpy(child, "");
         strcpy(child_path, "");

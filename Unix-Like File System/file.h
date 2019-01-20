@@ -26,9 +26,11 @@ void new_volume() {
 
         struct inode_t* root = get_inode_by_num(0);
 
+        current_working_inode = get_inode_by_num(0);
+        strcpy(current_working_directory, "/");
+
         create_directory(root, "/etc");
         create_directory(root, "/etc/test");
-
     }
 }
 
@@ -45,9 +47,8 @@ void mount_volume() {
             fread(inodes, INODE_SIZE, 1, disk);
         }
 
-        //for test
-        strcpy(current_user, "root");
-        strcpy(current_group, "root");
+        current_working_inode = get_inode_by_num(0);
+        strcpy(current_working_directory, "/");
     }
 }
 
