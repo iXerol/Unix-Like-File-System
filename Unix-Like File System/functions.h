@@ -8,6 +8,10 @@
 
 void read_data(struct inode_t* inode, char* data);
 
+void erase_data(struct inode_t* inode);
+
+void write_data(struct inode_t* inode, char* data);
+
 struct inode_t* get_inode_by_num(unsigned int n);
 
 unsigned int get_free_inode(void);
@@ -32,7 +36,9 @@ struct inode_t* find_parent(struct inode_t* working_directory, char* path);
 
 
 void read_data(struct inode_t* inode, char* data) {
-    //读取pInode指向的inode块数据
+    if (inode == NULL || data == NULL) {
+        return;
+    }
     size_t read_data = 0;
 
     for (unsigned short i = 0; read_data < MAX_DIRECT_FILE_SIZE && read_data < inode->size; ++i) {
@@ -41,9 +47,9 @@ void read_data(struct inode_t* inode, char* data) {
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(data + read_data, size_to_read, 1, disk);
         read_data += size_to_read;
-        if (read_data == inode->size) {
-            return;
-        }
+    }
+    if (inode->size == inode->size) {
+        return;
     }
 
     unsigned int level_1_data_block = inode->data_address[NADDR - 2];
@@ -56,9 +62,9 @@ void read_data(struct inode_t* inode, char* data) {
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(data + read_data, size_to_read, 1, disk);
         read_data += size_to_read;
-        if (read_data == inode->size) {
-            return;
-        }
+    }
+    if (inode->size == inode->size) {
+        return;
     }
 
     unsigned int level_2_data_block = inode->data_address[NADDR - 1];
@@ -75,14 +81,14 @@ void read_data(struct inode_t* inode, char* data) {
             fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
             fread(data + read_data, size_to_read, 1, disk);
             read_data += size_to_read;
-            if (read_data == inode->size) {
-                return;
-            }
         }
     }
 }
 
 void erase_data(struct inode_t* inode) {
+    if (inode == NULL) {
+        return;
+    }
     size_t recovered_data = 0;
 
     for (unsigned short i = 0; recovered_data < MAX_DIRECT_FILE_SIZE && recovered_data < inode->size; ++i) {
@@ -90,10 +96,9 @@ void erase_data(struct inode_t* inode) {
         size_t size_to_recover = (inode->size - recovered_data >= BLOCK_SIZE) ? BLOCK_SIZE : inode->size - recovered_data;
         return_data_block(current_data_block);
         recovered_data += size_to_recover;
-        if (recovered_data == inode->size) {
-            inode->size = 0;
-            return;
-        }
+    }
+    if (inode->size == inode->size) {
+        return;
     }
 
     unsigned int level_1_data_block = inode->data_address[NADDR - 2];
@@ -106,10 +111,9 @@ void erase_data(struct inode_t* inode) {
         size_t size_to_recover = inode->size - recovered_data >= BLOCK_SIZE ? BLOCK_SIZE : inode->size - recovered_data;
         return_data_block(current_data_block);
         recovered_data += size_to_recover;
-        if (recovered_data == inode->size) {
-            inode->size = 0;
-            return;
-        }
+    }
+    if (inode->size == inode->size) {
+        return;
     }
 
     unsigned int level_2_data_block = inode->data_address[NADDR - 1];
@@ -127,12 +131,65 @@ void erase_data(struct inode_t* inode) {
             size_t size_to_recover = inode->size - recovered_data >= BLOCK_SIZE ? BLOCK_SIZE : inode->size - recovered_data;
             return_data_block(current_data_block);
             recovered_data += size_to_recover;
-            if (recovered_data == inode->size) {
-                inode->size = 0;
-                return;
-            }
         }
     }
+}
+
+void write_data(struct inode_t* inode, char* data) {
+    if (inode == NULL || data == NULL) {
+        return;
+    }
+    size_t data_size = strlen(data);
+
+    for (unsigned short i = 0; inode->size < MAX_DIRECT_FILE_SIZE && inode->size < data_size; ++i) {
+        unsigned int current_data_block = get_free_data_block();
+        inode->data_address[i] = current_data_block;
+        size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+        fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+        fwrite(data + inode->size, size_to_write, 1, disk);
+        inode->size += size_to_write;
+    }
+    if (inode->size == data_size) {
+        return;
+    }
+
+
+    unsigned int level_1_data_block = get_free_data_block();
+    inode->data_address[NADDR - 2] = level_1_data_block;
+    unsigned int level_1_address[NADDR_BLOCK];
+    for (unsigned short i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < data_size; ++i) {
+        unsigned int current_data_block = get_free_data_block();
+        level_1_address[i] = current_data_block;
+        size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+        fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+        fwrite(data + inode->size, size_to_write, 1, disk);
+        inode->size += size_to_write;
+    }
+    fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+    fwrite(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+    if (inode->size == data_size) {
+        return;
+    }
+    
+
+    unsigned int level_2_data_block = get_free_data_block();
+    inode->data_address[NADDR - 1] = level_2_data_block;
+    unsigned int level_2_address[NADDR_BLOCK];
+    for (int i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < data_size; ++i) {
+        level_1_data_block = level_2_address[i];
+        for (unsigned short j = 0; inode->size < MAX_FILE_SIZE && inode->size < data_size; ++j) {
+            unsigned int current_data_block = get_free_data_block();
+            level_1_address[j] = current_data_block;
+            size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+            fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+            fwrite(data + inode->size, size_to_write, 1, disk);
+            inode->size += size_to_write;
+        }
+        fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+        fwrite(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+    }
+    fseek(disk, (level_2_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+    fwrite(level_2_address, sizeof(unsigned int), NADDR_BLOCK, disk);
 }
 
 
