@@ -4,6 +4,7 @@
 #include "variables.h"
 #include "path.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 void create_root(void);
 
@@ -174,7 +175,10 @@ void return_data_block(unsigned int n) {
 
 
 
-_Bool check_read_permission(struct inode_t* file) {
+bool check_read_permission(struct inode_t* file) {
+    if (file == NULL) {
+        return false;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IRUSR);
@@ -187,7 +191,10 @@ _Bool check_read_permission(struct inode_t* file) {
     }
 }
 
-_Bool check_write_permission(struct inode_t* file) {
+bool check_write_permission(struct inode_t* file) {
+    if (file == NULL) {
+        return false;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IWUSR);
@@ -200,7 +207,10 @@ _Bool check_write_permission(struct inode_t* file) {
     }
 }
 
-_Bool check_execute_permission(struct inode_t* file) {
+bool check_execute_permission(struct inode_t* file) {
+    if (file == NULL) {
+        return false;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IXUSR);
