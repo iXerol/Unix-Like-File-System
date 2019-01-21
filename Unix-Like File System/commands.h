@@ -3,7 +3,7 @@
 
 #include "functions.h"
 
-//void ls();
+//😎void ls();
 //
 //void chmod(char* filename, char* username, int privilege);
 //
@@ -11,13 +11,11 @@
 //
 //void chgrp(char* filename, char* groupname);
 //
-//void pwd();
+//😎void pwd();
 //
 //void cd(char* path);
-////a: No such file or directory
-////a: Not a directory
 //
-//void mkdir(char* directoryName);
+//😎void mkdir(char* directoryName);
 //
 //void rmdir(char* directoryName);
 //
@@ -27,13 +25,13 @@
 //
 //void rm(char* filename);
 //
-//void ln();
+//😎void ln();
 //
 //void cat(char* filename);
 //
 //void passwd();
 //
-//void umask();
+//😎void umask();
 
 
 
