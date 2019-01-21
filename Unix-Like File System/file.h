@@ -1,7 +1,7 @@
 #ifndef file_h
 #define file_h
 
-#include "functions.h"
+#include "commands.h"
 
 void new_volume(void);
 void mount_volume(void);
