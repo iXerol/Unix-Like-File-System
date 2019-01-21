@@ -82,6 +82,58 @@ void read_data(struct inode_t* inode, char* data) {
     }
 }
 
+void erase_data(struct inode_t* inode) {
+    size_t recovered_data = 0;
+
+    for (unsigned short i = 0; recovered_data < MAX_DIRECT_FILE_SIZE && recovered_data < inode->size; ++i) {
+        unsigned int current_data_block = inode->data_address[i];
+        size_t size_to_recover = (inode->size - recovered_data >= BLOCK_SIZE) ? BLOCK_SIZE : inode->size - recovered_data;
+        return_data_block(current_data_block);
+        recovered_data += size_to_recover;
+        if (recovered_data == inode->size) {
+            inode->size = 0;
+            return;
+        }
+    }
+
+    unsigned int level_1_data_block = inode->data_address[NADDR - 2];
+    unsigned int level_1_address[NADDR_BLOCK];
+    fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+    fread(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+    return_data_block(level_1_data_block);
+    for (unsigned short i = 0; recovered_data < MAX_LEVEL_1_FILE_SIZE && recovered_data < inode->size; ++i) {
+        unsigned int current_data_block = level_1_address[i];
+        size_t size_to_recover = inode->size - recovered_data >= BLOCK_SIZE ? BLOCK_SIZE : inode->size - recovered_data;
+        return_data_block(current_data_block);
+        recovered_data += size_to_recover;
+        if (recovered_data == inode->size) {
+            inode->size = 0;
+            return;
+        }
+    }
+
+    unsigned int level_2_data_block = inode->data_address[NADDR - 1];
+    unsigned int level_2_address[NADDR_BLOCK];
+    fseek(disk, (level_2_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+    fread(level_2_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+    return_data_block(level_2_data_block);
+    for (int i = 0; recovered_data < MAX_LEVEL_1_FILE_SIZE && recovered_data < inode->size; ++i) {
+        level_1_data_block = level_2_address[i];
+        fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+        fread(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+        return_data_block(level_1_data_block);
+        for (unsigned short j = 0; recovered_data < MAX_FILE_SIZE && recovered_data < inode->size; ++j) {
+            unsigned int current_data_block = level_1_address[j];
+            size_t size_to_recover = inode->size - recovered_data >= BLOCK_SIZE ? BLOCK_SIZE : inode->size - recovered_data;
+            return_data_block(current_data_block);
+            recovered_data += size_to_recover;
+            if (recovered_data == inode->size) {
+                inode->size = 0;
+                return;
+            }
+        }
+    }
+}
 
 
 struct inode_t* get_inode_by_num(unsigned int n) {

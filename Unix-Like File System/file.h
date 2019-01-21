@@ -28,8 +28,8 @@ void new_volume() {
             write_inode(i);
         }
 
-        strcpy(current_user, "system");
-        strcpy(current_group, "system");
+        strcpy(current_user, "root");
+        strcpy(current_group, "wheel");
 
         create_root();
 
