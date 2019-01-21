@@ -192,6 +192,9 @@ void write_data(struct inode_t* inode, char* data) {
 
 
 struct inode_t* get_inode_by_num(unsigned int n) {
+    if (n > INODE_NUM) {
+        return NULL;
+    }
     return inodes + n;
 }
 
