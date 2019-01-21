@@ -116,7 +116,6 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
     } else {
         strcpy(directory_name, directory_path);
     }
-    printf("name: %s\nlength: %zu\n", directory_name, strlen(directory_name));
     if (working_directory == NULL) {
         printf("mkdir: %s: No such file or directory\n", directory_path);
 
@@ -248,6 +247,18 @@ void status(struct inode_t* directory, char* path) {
         printf("Last Accessed Time: %s", asctime(localtime(&inode->accessed_time)));
         printf("inode number: %u\n", inode->number);
         printf("Link Count: %u\n", inode->link_count);
+    }
+}
+
+void show_umask() {
+    printf("%04o\n", superblock.umask);
+}
+
+void change_umask(unsigned short new_umask) {
+    if (new_umask < 01000) {
+        superblock.umask = new_umask;
+    } else {
+        printf("umask: %o: octal number out of range\n", new_umask);
     }
 }
 #endif /* commands_h */

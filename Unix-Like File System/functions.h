@@ -153,7 +153,6 @@ void write_data(struct inode_t* inode, char* data) {
         return;
     }
 
-
     unsigned int level_1_data_block = get_free_data_block();
     inode->data_address[NADDR - 2] = level_1_data_block;
     unsigned int level_1_address[NADDR_BLOCK];
@@ -170,7 +169,6 @@ void write_data(struct inode_t* inode, char* data) {
     if (inode->size == data_size) {
         return;
     }
-    
 
     unsigned int level_2_data_block = get_free_data_block();
     inode->data_address[NADDR - 1] = level_2_data_block;
