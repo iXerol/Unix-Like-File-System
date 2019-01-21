@@ -171,6 +171,55 @@ void return_data_block(unsigned int n) {
     }
 }
 
+
+
+
+_Bool check_read_permission(struct inode_t* file) {
+    if (strcmp(file->user, current_user) == 0) {
+        //當前用戶為文件主
+        return (file->mode & IRUSR);
+    } else if (strcmp(file->group, current_group) == 0) {
+        //當前用戶組為文件所屬用戶組
+        return (file->mode & IRGRP);
+    } else {
+        //當前用戶為其他用戶
+        return (file->mode & IROTH);
+    }
+}
+
+_Bool check_write_permission(struct inode_t* file) {
+    if (strcmp(file->user, current_user) == 0) {
+        //當前用戶為文件主
+        return (file->mode & IWUSR);
+    } else if (strcmp(file->group, current_group) == 0) {
+        //當前用戶組為文件所屬用戶組
+        return (file->mode & IWGRP);
+    } else {
+        //當前用戶為其他用戶
+        return (file->mode & IWOTH);
+    }
+}
+
+_Bool check_execute_permission(struct inode_t* file) {
+    if (strcmp(file->user, current_user) == 0) {
+        //當前用戶為文件主
+        return (file->mode & IXUSR);
+    } else if (strcmp(file->group, current_group) == 0) {
+        //當前用戶組為文件所屬用戶組
+        return (file->mode & IXGRP);
+    } else {
+        //當前用戶為其他用戶
+        return (file->mode & IXOTH);
+    }
+}
+
+
+
+
+
+
+
+
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     if (target_file_path == NULL || source_file_path == NULL) {
         return;
@@ -215,9 +264,7 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
 }
 
 void create_directory(struct inode_t* working_directory, char* directory_path) {
-
-
-    if (working_directory == NULL || directory_path == NULL) {
+    if (directory_path == NULL) {
         return;
     }
     char* directory_name = (char*)malloc(strlen(directory_path));
@@ -428,7 +475,5 @@ void status(struct inode_t* directory, char* path) {
         printf("Link Count: %u\n", inode->link_count);
     }
 }
-
-
 
 #endif /* functions_h */
