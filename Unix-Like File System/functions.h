@@ -129,7 +129,10 @@ unsigned int get_free_data_block() {
 }
 
 void return_inode(unsigned int n) {
-
+    if (n >= 0 && n < INODE_NUM && (superblock.free_inodes & (1 << n)) == 0) {
+        superblock.free_inodes |= (1 << n);
+        ++superblock.num_free_inode;
+    }
 }
 
 void return_data_block(unsigned int n) {
