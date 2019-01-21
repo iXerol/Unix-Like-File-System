@@ -10,7 +10,8 @@ int main(int argc, const char * argv[]) {
     show();
 
     present_working_directory();
-    status(current_working_inode, "/");
+//    status(current_working_inode, "/");
+    list(current_working_inode, "/");
     save();
     return 0;
 }

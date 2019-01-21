@@ -220,6 +220,60 @@ void present_working_directory() {
     printf("%s\n", working_directory_string);
 }
 
+void list(struct inode_t* directory,  char* path) {
+    if (path != NULL && strcmp(path, "") != 0) {
+        directory = find_file_by_path(directory, path);
+    }
+    if (directory == NULL) {
+        printf("ls: %s: No such file or directory\n", path);
+    } else if (directory->mode / 01000 == ISDIR / 01000) {
+        char *data = (char *)malloc(directory->size);
+        read_data(directory, data);
+        struct child_file_t* directory_content = (struct child_file_t*)data;
+
+//        printf("Mode    Link count   User   Group    Size    Last modified    Filename\n");
+
+        for (int i = 0; i < directory->size / sizeof(struct child_file_t); ++i) {
+            struct inode_t* inode = get_inode_by_num(directory_content[i].inode_number);
+
+            if (inode->mode / 01000 == ISREG / 01000) {
+                printf("-");
+            } else if (inode->mode / 01000 == ISDIR / 01000) {
+                printf("d");
+            } else if (inode->mode / 01000 == ISCHR / 01000) {
+                printf("c");
+            } else if (inode->mode / 01000 == ISBLK / 01000) {
+                printf("b");
+            } else if (inode->mode / 01000 == ISLNK / 01000) {
+                printf("l");
+            } else if (inode->mode / 01000 == ISFIFO / 01000) {
+                printf("p");
+            } else if (inode->mode / 01000 == ISSOCK / 01000) {
+                printf("s");
+            }
+            printf("%c%c%c%c%c%c%c%c%c ", (inode->mode & IRUSR) != 0 ? 'r' : '-',
+                   (inode->mode & IWUSR) != 0 ? 'w' : '-',
+                   (inode->mode & IXUSR) != 0 ? 'x' : '-',
+                   (inode->mode & IRGRP) != 0 ? 'r' : '-',
+                   (inode->mode & IWGRP) != 0 ? 'w' : '-',
+                   (inode->mode & IXGRP) != 0 ? 'x' : '-',
+                   (inode->mode & IROTH) != 0 ? 'r' : '-',
+                   (inode->mode & IWOTH) != 0 ? 'w' : '-',
+                   (inode->mode & IXOTH) != 0 ? 'x' : '-');
+
+            printf("%3d ", inode->link_count);
+            printf("%s  %s ", inode->user, inode->group);
+            printf("%8zu", inode->size);
+
+            char time[26];
+            strcpy(time,  asctime(localtime(&inode->modified_time)));
+            time[24] = ' ';
+            printf(" %s",time);
+            printf("%s\n", directory_content[i].filename);
+        }
+    }
+}
+
 void status(struct inode_t* directory, char* path) {
     if (path == NULL) {
         path = (char*)malloc(10);
@@ -236,10 +290,26 @@ void status(struct inode_t* directory, char* path) {
             printf("-");
         } else if (inode->mode / 01000 == ISDIR / 01000) {
             printf("d");
-        } else if (inode->mode / 01000 == ISISLNK / 01000) {
+        } else if (inode->mode / 01000 == ISCHR / 01000) {
+            printf("c");
+        } else if (inode->mode / 01000 == ISBLK / 01000) {
+            printf("b");
+        } else if (inode->mode / 01000 == ISLNK / 01000) {
             printf("l");
+        } else if (inode->mode / 01000 == ISFIFO / 01000) {
+            printf("p");
+        } else if (inode->mode / 01000 == ISSOCK / 01000) {
+            printf("s");
         }
-        printf("%c%c%c%c%c%c%c%c%c\n", (inode->mode & IRUSR) != 0 ? 'r' : '-', (inode->mode & IWUSR) != 0 ? 'w' : '-', (inode->mode & IXUSR) != 0 ? 'x' : '-',(inode->mode & IRGRP) != 0 ? 'r' : '-', (inode->mode & IWGRP) != 0 ? 'w' : '-', (inode->mode & IXGRP) != 0 ? 'x' : '-', (inode->mode & IROTH) != 0 ? 'r' : '-', (inode->mode & IWOTH) != 0 ? 'w' : '-', (inode->mode & IXOTH) != 0 ? 'x' : '-');
+        printf("%c%c%c%c%c%c%c%c%c\n", (inode->mode & IRUSR) != 0 ? 'r' : '-',
+               (inode->mode & IWUSR) != 0 ? 'w' : '-',
+               (inode->mode & IXUSR) != 0 ? 'x' : '-',
+               (inode->mode & IRGRP) != 0 ? 'r' : '-',
+               (inode->mode & IWGRP) != 0 ? 'w' : '-',
+               (inode->mode & IXGRP) != 0 ? 'x' : '-',
+               (inode->mode & IROTH) != 0 ? 'r' : '-',
+               (inode->mode & IWOTH) != 0 ? 'w' : '-',
+               (inode->mode & IXOTH) != 0 ? 'x' : '-');
         printf("User: %s\n", inode->user);
         printf("Group: %s\n", inode->group);
         printf("Created Time: %s", asctime(localtime(&inode->created_time)));
