@@ -42,7 +42,7 @@ void new_volume() {
         touch_file("etc/passwd");
         status(root, "/etc/passwd");
         show();
-        resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);
+//        resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);
         show();
         status(root, "/etc/passwd");
     }
@@ -64,9 +64,10 @@ void mount_volume() {
         current_working_inode = get_inode_by_num(0);
         strcpy(current_working_directory, "/");
         show();
-        resize_text_file(find_file_by_path(current_working_inode, "etc/passwd"), 67585);
+//        resize_text_file(find_file_by_path(current_working_inode, "etc/passwd"), 67585);
 //        remove_regular_file("/etc/passwd");
         status(current_working_inode, "/etc/passwd");
+        cat("/etc/passwd");
     }
 }
 

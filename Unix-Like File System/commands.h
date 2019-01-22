@@ -54,6 +54,8 @@ void remove_regular_file(char* path);
 
 void resize_text_file(struct inode_t* inode, size_t new_size);
 
+void cat(char* path);
+
 void show_umask(void);
 
 void change_umask(unsigned short new_umask);
@@ -469,13 +471,13 @@ void remove_regular_file(char* path) {
     }
     struct inode_t* parent_directory = find_parent(current_working_inode, path);
     if (parent_directory == NULL) {
-        printf("rm: %s: No such file or directory", path);
+        printf("rm: %s: No such file or directory\n", path);
     }
     char* filename = (char*)malloc(strlen(path));
     get_file_name(path, filename);
     struct inode_t* file = find_file_from_parent(parent_directory, filename);
     if (file == NULL) {
-        printf("rm: %s: No such file or directory", path);
+        printf("rm: %s: No such file or directory\n", path);
     }
     if ((file->mode & 07000) == ISDIR) {
         printf("rm: %s: is a directory\n", path);
@@ -500,6 +502,24 @@ void remove_regular_file(char* path) {
     }
 }
 
+void cat(char* path) {
+    if (path == NULL) {
+        return;
+    }
+    struct inode_t* inode = find_file_by_path(current_working_inode, path);
+    if (inode == NULL) {
+        printf("cat: %s: No such file or directory\n", path);
+    } else if ((inode->mode & 07000) == ISDIR) {
+        printf("cat: %s: Is a directory\n", path);
+    } else {
+        char* data = (char*)malloc(inode->size);
+        read_data(inode, data);
+        for (size_t i = 0; i < inode->size; ++i) {
+            putchar(data[i]);
+        }
+        putchar('\n');
+    }
+}
 
 
 
