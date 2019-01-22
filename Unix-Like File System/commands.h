@@ -23,7 +23,7 @@
 //
 //void cp(char* pathOriginal, char* pathDuplicate);
 //
-//void rm(char* filename);
+//😎void rm(char* filename);
 //
 //😎void ln();
 //
@@ -34,8 +34,7 @@
 //😎void umask();
 
 
-
-void create_root(void);
+void show(void);
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
@@ -52,16 +51,18 @@ void status(struct inode_t* directory, char* path);
 void resize_text_file(struct inode_t* inode, size_t new_size);
 
 
-void create_root() {
-    //inodes[0] 對應根目錄
-    inodes[0].link_count = 1;
-    strcpy(inodes[0].user, current_user);
-    strcpy(inodes[0].group, current_group);
-    inodes[0].mode = ISDIR + MAX_DIRECTORY_PERMISSION - superblock.umask;
-    superblock.free_inodes = superblock.free_inodes ^ (1 << get_free_inode());
-
-    link_file(get_inode_by_num(0), ".", "/");
-    link_file(get_inode_by_num(0), "..", "/");
+void show() {
+    printf("free data block: %u\n", superblock.num_free_block);
+    printf("\nfree data block stack size: %zu\n", superblock.stack_size);
+    printf("free data block stack:");
+    for (int i = 0; i < superblock.stack_size; ++i) {
+        printf(" %d", superblock.free_block_stack[i]);
+    }
+    printf("\n\nfree inode number: %u\ninodes:", superblock.num_free_inode);
+    for (int i = 0; i < INODE_NUM; ++i) {
+        printf(" %d", (superblock.free_inodes & ((uint64_t)(1) << i)) != 0 ? i : -1);
+    }
+    printf("\n");
 }
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
