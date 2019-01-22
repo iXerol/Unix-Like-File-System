@@ -36,6 +36,12 @@
 
 void show(void);
 
+void present_working_directory(void);
+
+void list(char* path);
+
+void status(struct inode_t* directory, char* path);
+
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
 void create_directory(struct inode_t* working_directory, char* directory_path);
@@ -46,13 +52,11 @@ void resize_text_file(struct inode_t* inode, size_t new_size);
 
 void remove_regular_file(char* path);
 
-void present_working_directory(void);
-
-void list(char* path);
-
-void status(struct inode_t* directory, char* path);
-
 void resize_text_file(struct inode_t* inode, size_t new_size);
+
+void show_umask(void);
+
+void change_umask(unsigned short new_umask);
 
 
 void show() {
@@ -67,6 +71,229 @@ void show() {
         printf(" %d", (superblock.free_inodes & ((uint64_t)(1) << i)) != 0 ? i : -1);
     }
     printf("\n");
+}
+
+void present_working_directory() {
+    if (current_working_inode->number == 0) {
+        printf("/\n");
+        return;
+    }
+
+    struct inode_t* working_directory = current_working_inode;
+    struct inode_t* worked_directory = current_working_inode;
+    char working_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] = "";
+    memset(working_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
+    char worked_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] ="";
+    memset(worked_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
+    char* data = (char*)malloc(sizeof(struct child_file_t) * INODE_NUM);
+
+    read_data(working_directory, data);
+    struct child_file_t* directory_content = (struct child_file_t*)data;
+    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+        if (strcmp(directory_content[i].filename, "..") == 0) {
+            worked_directory = working_directory;
+            working_directory = get_inode_by_num(directory_content[i].inode_number);
+            break;
+        }
+    }
+    while (working_directory->number != 0) {
+        read_data(working_directory, data);
+        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+            if (directory_content[i].inode_number == worked_directory->number) {
+                strcpy(working_directory_string, "/");
+                strcat(working_directory_string, directory_content[i].filename);
+                strcat(working_directory_string, worked_directory_string);
+                strcpy(worked_directory_string, working_directory_string);
+                break;
+            }
+        }
+        directory_content = (struct child_file_t*)data;
+        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+            if (strcmp(directory_content[i].filename, "..") == 0) {
+                worked_directory = working_directory;
+                working_directory = get_inode_by_num(directory_content[i].inode_number);
+                break;
+            }
+        }
+    }
+    read_data(working_directory, data);
+    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
+        if (directory_content[i].inode_number == worked_directory->number) {
+            strcpy(working_directory_string, "/");
+            strcat(working_directory_string, directory_content[i].filename);
+            strcat(working_directory_string, worked_directory_string);
+            strcpy(worked_directory_string, working_directory_string);
+            //            break;
+        }
+    }
+
+    printf("%s\n", working_directory_string);
+}
+
+void list(char* path) {
+    struct inode_t* directory = current_working_inode;
+    if (path != NULL && strcmp(path, "") != 0) {
+        directory = find_file_by_path(current_working_inode, path);
+    }
+    if (directory == NULL) {
+        printf("ls: %s: No such file or directory\n", path);
+    } else if ((directory->mode & 07000) == ISDIR) {
+        char *data = (char *)malloc(directory->size);
+        read_data(directory, data);
+        struct child_file_t* directory_content = (struct child_file_t*)data;
+
+        //        printf("Mode    Link count   User   Group    Size    Last modified    Filename\n");
+
+        for (int i = 0; i < directory->size / sizeof(struct child_file_t); ++i) {
+            struct inode_t* inode = get_inode_by_num(directory_content[i].inode_number);
+            switch (inode->mode & 07000) {
+                case ISREG:
+                    putchar('-');
+                    break;
+                case ISDIR:
+                    putchar('d');
+                    break;
+                case ISCHR:
+                    putchar('c');
+                    break;
+                case ISBLK:
+                    putchar('b');
+                    break;
+                case ISLNK:
+                    putchar('l');
+                    break;
+                case ISFIFO:
+                    putchar('p');
+                    break;
+                case ISSOCK:
+                    putchar('s');
+                    break;
+                default:
+                    break;
+            }
+            printf("%c%c%c%c%c%c%c%c%c ", (inode->mode & IRUSR) != 0 ? 'r' : '-',
+                   (inode->mode & IWUSR) != 0 ? 'w' : '-',
+                   (inode->mode & IXUSR) != 0 ? 'x' : '-',
+                   (inode->mode & IRGRP) != 0 ? 'r' : '-',
+                   (inode->mode & IWGRP) != 0 ? 'w' : '-',
+                   (inode->mode & IXGRP) != 0 ? 'x' : '-',
+                   (inode->mode & IROTH) != 0 ? 'r' : '-',
+                   (inode->mode & IWOTH) != 0 ? 'w' : '-',
+                   (inode->mode & IXOTH) != 0 ? 'x' : '-');
+
+            printf("%3d ", inode->link_count);
+            printf("%s  %s ", inode->user, inode->group);
+            printf("%8zu", inode->size);
+
+            char time[26];
+            strcpy(time,  asctime(localtime(&inode->modified_time)));
+            time[24] = ' ';
+            printf(" %s",time);
+            printf("%s\n", directory_content[i].filename);
+        }
+    } else {
+        struct inode_t* inode = directory;
+        switch (inode->mode & 07000) {
+            case ISREG:
+                putchar('-');
+                break;
+            case ISDIR:
+                putchar('d');
+                break;
+            case ISCHR:
+                putchar('c');
+                break;
+            case ISBLK:
+                putchar('b');
+                break;
+            case ISLNK:
+                putchar('l');
+                break;
+            case ISFIFO:
+                putchar('p');
+                break;
+            case ISSOCK:
+                putchar('s');
+                break;
+            default:
+                break;
+        }
+        printf("%c%c%c%c%c%c%c%c%c ", (inode->mode & IRUSR) != 0 ? 'r' : '-',
+               (inode->mode & IWUSR) != 0 ? 'w' : '-',
+               (inode->mode & IXUSR) != 0 ? 'x' : '-',
+               (inode->mode & IRGRP) != 0 ? 'r' : '-',
+               (inode->mode & IWGRP) != 0 ? 'w' : '-',
+               (inode->mode & IXGRP) != 0 ? 'x' : '-',
+               (inode->mode & IROTH) != 0 ? 'r' : '-',
+               (inode->mode & IWOTH) != 0 ? 'w' : '-',
+               (inode->mode & IXOTH) != 0 ? 'x' : '-');
+
+        printf("%3d ", inode->link_count);
+        printf("%s  %s ", inode->user, inode->group);
+        printf("%8zu", inode->size);
+
+        char time[26];
+        strcpy(time,  asctime(localtime(&inode->modified_time)));
+        time[24] = ' ';
+        printf(" %s",time);
+        printf("%s\n", path);
+    }
+}
+
+void status(struct inode_t* directory, char* path) {
+    if (path == NULL) {
+        path = (char*)malloc(10);
+        strcpy(path, "/");
+    }
+    struct inode_t* inode = find_file_by_path(directory, path);
+    if (inode == NULL) {
+        printf("stat: %s: stat: No such file or directory\n", path);
+    } else {
+        printf("File: %s\n", path);
+        printf("Size: %zu\n", inode->size);
+        printf("Permission: ");
+        switch (inode->mode & 07000) {
+            case ISREG:
+                putchar('-');
+                break;
+            case ISDIR:
+                putchar('d');
+                break;
+            case ISCHR:
+                putchar('c');
+                break;
+            case ISBLK:
+                putchar('b');
+                break;
+            case ISLNK:
+                putchar('l');
+                break;
+            case ISFIFO:
+                putchar('p');
+                break;
+            case ISSOCK:
+                putchar('s');
+                break;
+            default:
+                break;
+        }
+        printf("%c%c%c%c%c%c%c%c%c\n", (inode->mode & IRUSR) != 0 ? 'r' : '-',
+               (inode->mode & IWUSR) != 0 ? 'w' : '-',
+               (inode->mode & IXUSR) != 0 ? 'x' : '-',
+               (inode->mode & IRGRP) != 0 ? 'r' : '-',
+               (inode->mode & IWGRP) != 0 ? 'w' : '-',
+               (inode->mode & IXGRP) != 0 ? 'x' : '-',
+               (inode->mode & IROTH) != 0 ? 'r' : '-',
+               (inode->mode & IWOTH) != 0 ? 'w' : '-',
+               (inode->mode & IXOTH) != 0 ? 'x' : '-');
+        printf("User: %s\n", inode->user);
+        printf("Group: %s\n", inode->group);
+        printf("Created Time: %s", asctime(localtime(&inode->created_time)));
+        printf("Last Modified Time: %s", asctime(localtime(&inode->modified_time)));
+        printf("Last Accessed Time: %s", asctime(localtime(&inode->accessed_time)));
+        printf("inode number: %u\n", inode->number);
+        printf("Link Count: %u\n", inode->link_count);
+    }
 }
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
@@ -275,228 +502,6 @@ void remove_regular_file(char* path) {
 
 
 
-void present_working_directory() {
-    if (current_working_inode->number == 0) {
-        printf("/\n");
-        return;
-    }
-
-    struct inode_t* working_directory = current_working_inode;
-    struct inode_t* worked_directory = current_working_inode;
-    char working_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] = "";
-    memset(working_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
-    char worked_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] ="";
-    memset(worked_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
-    char* data = (char*)malloc(sizeof(struct child_file_t) * INODE_NUM);
-
-    read_data(working_directory, data);
-    struct child_file_t* directory_content = (struct child_file_t*)data;
-    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-        if (strcmp(directory_content[i].filename, "..") == 0) {
-            worked_directory = working_directory;
-            working_directory = get_inode_by_num(directory_content[i].inode_number);
-            break;
-        }
-    }
-    while (working_directory->number != 0) {
-        read_data(working_directory, data);
-        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-            if (directory_content[i].inode_number == worked_directory->number) {
-                strcpy(working_directory_string, "/");
-                strcat(working_directory_string, directory_content[i].filename);
-                strcat(working_directory_string, worked_directory_string);
-                strcpy(worked_directory_string, working_directory_string);
-                break;
-            }
-        }
-        directory_content = (struct child_file_t*)data;
-        for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-            if (strcmp(directory_content[i].filename, "..") == 0) {
-                worked_directory = working_directory;
-                working_directory = get_inode_by_num(directory_content[i].inode_number);
-                break;
-            }
-        }
-    }
-    read_data(working_directory, data);
-    for (int i = 0; i < working_directory->size / sizeof(struct child_file_t); ++i) {
-        if (directory_content[i].inode_number == worked_directory->number) {
-            strcpy(working_directory_string, "/");
-            strcat(working_directory_string, directory_content[i].filename);
-            strcat(working_directory_string, worked_directory_string);
-            strcpy(worked_directory_string, working_directory_string);
-            //            break;
-        }
-    }
-
-    printf("%s\n", working_directory_string);
-}
-
-void list(char* path) {
-    struct inode_t* directory = current_working_inode;
-    if (path != NULL && strcmp(path, "") != 0) {
-        directory = find_file_by_path(current_working_inode, path);
-    }
-    if (directory == NULL) {
-        printf("ls: %s: No such file or directory\n", path);
-    } else if ((directory->mode & 07000) == ISDIR) {
-        char *data = (char *)malloc(directory->size);
-        read_data(directory, data);
-        struct child_file_t* directory_content = (struct child_file_t*)data;
-
-//        printf("Mode    Link count   User   Group    Size    Last modified    Filename\n");
-
-        for (int i = 0; i < directory->size / sizeof(struct child_file_t); ++i) {
-            struct inode_t* inode = get_inode_by_num(directory_content[i].inode_number);
-            switch (inode->mode & 07000) {
-                case ISREG:
-                    putchar('-');
-                    break;
-                case ISDIR:
-                    putchar('d');
-                    break;
-                case ISCHR:
-                    putchar('c');
-                    break;
-                case ISBLK:
-                    putchar('b');
-                    break;
-                case ISLNK:
-                    putchar('l');
-                    break;
-                case ISFIFO:
-                    putchar('p');
-                    break;
-                case ISSOCK:
-                    putchar('s');
-                    break;
-                default:
-                    break;
-            }
-            printf("%c%c%c%c%c%c%c%c%c ", (inode->mode & IRUSR) != 0 ? 'r' : '-',
-                   (inode->mode & IWUSR) != 0 ? 'w' : '-',
-                   (inode->mode & IXUSR) != 0 ? 'x' : '-',
-                   (inode->mode & IRGRP) != 0 ? 'r' : '-',
-                   (inode->mode & IWGRP) != 0 ? 'w' : '-',
-                   (inode->mode & IXGRP) != 0 ? 'x' : '-',
-                   (inode->mode & IROTH) != 0 ? 'r' : '-',
-                   (inode->mode & IWOTH) != 0 ? 'w' : '-',
-                   (inode->mode & IXOTH) != 0 ? 'x' : '-');
-
-            printf("%3d ", inode->link_count);
-            printf("%s  %s ", inode->user, inode->group);
-            printf("%8zu", inode->size);
-
-            char time[26];
-            strcpy(time,  asctime(localtime(&inode->modified_time)));
-            time[24] = ' ';
-            printf(" %s",time);
-            printf("%s\n", directory_content[i].filename);
-        }
-    } else {
-        struct inode_t* inode = directory;
-        switch (inode->mode & 07000) {
-            case ISREG:
-                putchar('-');
-                break;
-            case ISDIR:
-                putchar('d');
-                break;
-            case ISCHR:
-                putchar('c');
-                break;
-            case ISBLK:
-                putchar('b');
-                break;
-            case ISLNK:
-                putchar('l');
-                break;
-            case ISFIFO:
-                putchar('p');
-                break;
-            case ISSOCK:
-                putchar('s');
-                break;
-            default:
-                break;
-        }
-        printf("%c%c%c%c%c%c%c%c%c ", (inode->mode & IRUSR) != 0 ? 'r' : '-',
-               (inode->mode & IWUSR) != 0 ? 'w' : '-',
-               (inode->mode & IXUSR) != 0 ? 'x' : '-',
-               (inode->mode & IRGRP) != 0 ? 'r' : '-',
-               (inode->mode & IWGRP) != 0 ? 'w' : '-',
-               (inode->mode & IXGRP) != 0 ? 'x' : '-',
-               (inode->mode & IROTH) != 0 ? 'r' : '-',
-               (inode->mode & IWOTH) != 0 ? 'w' : '-',
-               (inode->mode & IXOTH) != 0 ? 'x' : '-');
-
-        printf("%3d ", inode->link_count);
-        printf("%s  %s ", inode->user, inode->group);
-        printf("%8zu", inode->size);
-
-        char time[26];
-        strcpy(time,  asctime(localtime(&inode->modified_time)));
-        time[24] = ' ';
-        printf(" %s",time);
-        printf("%s\n", path);
-    }
-}
-
-void status(struct inode_t* directory, char* path) {
-    if (path == NULL) {
-        path = (char*)malloc(10);
-        strcpy(path, "/");
-    }
-    struct inode_t* inode = find_file_by_path(directory, path);
-    if (inode == NULL) {
-        printf("stat: %s: stat: No such file or directory\n", path);
-    } else {
-        printf("File: %s\n", path);
-        printf("Size: %zu\n", inode->size);
-        printf("Permission: ");
-        switch (inode->mode & 07000) {
-            case ISREG:
-                putchar('-');
-                break;
-            case ISDIR:
-                putchar('d');
-                break;
-            case ISCHR:
-                putchar('c');
-                break;
-            case ISBLK:
-                putchar('b');
-                break;
-            case ISLNK:
-                putchar('l');
-                break;
-            case ISFIFO:
-                putchar('p');
-                break;
-            case ISSOCK:
-                putchar('s');
-                break;
-            default:
-                break;
-        }
-        printf("%c%c%c%c%c%c%c%c%c\n", (inode->mode & IRUSR) != 0 ? 'r' : '-',
-               (inode->mode & IWUSR) != 0 ? 'w' : '-',
-               (inode->mode & IXUSR) != 0 ? 'x' : '-',
-               (inode->mode & IRGRP) != 0 ? 'r' : '-',
-               (inode->mode & IWGRP) != 0 ? 'w' : '-',
-               (inode->mode & IXGRP) != 0 ? 'x' : '-',
-               (inode->mode & IROTH) != 0 ? 'r' : '-',
-               (inode->mode & IWOTH) != 0 ? 'w' : '-',
-               (inode->mode & IXOTH) != 0 ? 'x' : '-');
-        printf("User: %s\n", inode->user);
-        printf("Group: %s\n", inode->group);
-        printf("Created Time: %s", asctime(localtime(&inode->created_time)));
-        printf("Last Modified Time: %s", asctime(localtime(&inode->modified_time)));
-        printf("Last Accessed Time: %s", asctime(localtime(&inode->accessed_time)));
-        printf("inode number: %u\n", inode->number);
-        printf("Link Count: %u\n", inode->link_count);
-    }
-}
 
 void show_umask() {
     printf("%04o\n", superblock.umask);

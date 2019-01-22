@@ -39,7 +39,7 @@ void new_volume() {
         strcpy(current_working_directory, "/");
 
         create_directory(root, "/etc");
-        touch_file(root, "etc/passwd");
+        touch_file("etc/passwd");
         status(root, "/etc/passwd");
         show();
         resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);
