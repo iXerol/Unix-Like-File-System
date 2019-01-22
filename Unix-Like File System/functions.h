@@ -30,7 +30,7 @@ bool check_execute_permission(struct inode_t* file);
 
 struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename);
 
-struct inode_t* find_file_by_path(struct inode_t* current_inode, char* path);
+struct inode_t* find_file_by_path(struct inode_t* current_inode, const char* path);
 
 struct inode_t* find_parent(struct inode_t* working_directory, char* path);
 
@@ -383,7 +383,7 @@ void touch_file(struct inode_t* working_directory, char* path) {
     }
 }
 
-struct inode_t *find_file_from_parent(struct inode_t* directory, char* filename) {
+struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename) {
     if (filename == NULL || directory == NULL || (directory->mode & 07000) != ISDIR) {
         return NULL;
     } else if (strchr(filename, '/') != NULL) {
@@ -403,11 +403,11 @@ struct inode_t *find_file_from_parent(struct inode_t* directory, char* filename)
     return NULL;
 }
 
-struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path) {
+struct inode_t* find_file_by_path(struct inode_t* working_directory, const char* path) {
     if (path == NULL) {
         return NULL;
     }
-    char child_file[FILE_NAME_LENGTH] = "";
+    char* child_file = (char*)malloc(strlen(path));
     char* child_path = (char*)malloc(strlen(path));
     if (path[0] == '/') {
         working_directory = get_inode_by_num(0);
@@ -415,6 +415,7 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path)
     } else {
         split_relative_path(path, child_file, child_path);
     }
+    char* new_path = (char*)malloc(strlen(path));
     do {
         if (strlen(child_path) == 0) {
             if (strlen(child_file) == 0) {
@@ -426,8 +427,8 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, char* path)
         if (strlen(child_file) > 0) {
             working_directory = find_file_from_parent(working_directory, child_file);
         }
-        strcpy(path, child_path);
-        split_relative_path(path, child_file, child_path);
+        strcpy(new_path, child_path);
+        split_relative_path(new_path, child_file, child_path);
     } while (working_directory != NULL);
     return working_directory;
 }
