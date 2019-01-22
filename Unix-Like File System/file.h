@@ -41,6 +41,10 @@ void new_volume() {
         create_directory(root, "/etc");
         touch_file(root, "etc/passwd");
         status(root, "/etc/passwd");
+        show();
+        resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);
+        show();
+        status(root, "/etc/passwd");
     }
 }
 
@@ -59,6 +63,10 @@ void mount_volume() {
 
         current_working_inode = get_inode_by_num(0);
         strcpy(current_working_directory, "/");
+        show();
+        resize_text_file(find_file_by_path(current_working_inode, "etc/passwd"), 67585);
+//        remove_regular_file("/etc/passwd");
+        status(current_working_inode, "/etc/passwd");
     }
 }
 
@@ -75,7 +83,8 @@ void save() {
 
 
 void show() {
-    printf("free data block stack size: %zu\n", superblock.stack_size);
+    printf("free data block: %u\n", superblock.num_free_block);
+    printf("\nfree data block stack size: %zu\n", superblock.stack_size);
     printf("free data block stack:");
     for (int i = 0; i < superblock.stack_size; ++i) {
         printf(" %d", superblock.free_block_stack[i]);
@@ -110,8 +119,8 @@ void initialize_data_block() {
     unsigned int num_data_block = BLOCK_NUM - DATA_BLOCK_START;
     unsigned int i;
     superblock.stack_size = 100;
-    for (i = 0; i < 100; ++i) {
-        superblock.free_block_stack[i] = i;
+    for (i = 1; i <= 100; ++i) {
+        superblock.free_block_stack[i - 1] = i;
     }
     fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     while (i < num_data_block) {

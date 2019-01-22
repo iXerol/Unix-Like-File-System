@@ -10,7 +10,7 @@ void read_data(struct inode_t* inode, char* data);
 
 void erase_data(struct inode_t* inode);
 
-void write_data(struct inode_t* inode, char* data);
+void write_data(struct inode_t* inode, char* data, size_t size);
 
 struct inode_t* get_inode_by_num(unsigned int n);
 
@@ -48,7 +48,7 @@ void read_data(struct inode_t* inode, char* data) {
         fread(data + read_data, size_to_read, 1, disk);
         read_data += size_to_read;
     }
-    if (inode->size == inode->size) {
+    if (read_data == inode->size) {
         return;
     }
 
@@ -63,7 +63,7 @@ void read_data(struct inode_t* inode, char* data) {
         fread(data + read_data, size_to_read, 1, disk);
         read_data += size_to_read;
     }
-    if (inode->size == inode->size) {
+    if (read_data == inode->size) {
         return;
     }
 
@@ -71,7 +71,7 @@ void read_data(struct inode_t* inode, char* data) {
     unsigned int level_2_address[NADDR_BLOCK];
     fseek(disk, (level_2_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     fread(level_2_address, sizeof(unsigned int), NADDR_BLOCK, disk);
-    for (int i = 0; read_data < MAX_LEVEL_1_FILE_SIZE && read_data < inode->size; ++i) {
+    for (int i = 0; read_data < MAX_FILE_SIZE && read_data < inode->size; ++i) {
         level_1_data_block = level_2_address[i];
         fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
@@ -97,7 +97,8 @@ void erase_data(struct inode_t* inode) {
         return_data_block(current_data_block);
         recovered_data += size_to_recover;
     }
-    if (inode->size == inode->size) {
+    if (recovered_data == inode->size) {
+        inode->size = 0;
         return;
     }
 
@@ -112,7 +113,8 @@ void erase_data(struct inode_t* inode) {
         return_data_block(current_data_block);
         recovered_data += size_to_recover;
     }
-    if (inode->size == inode->size) {
+    if (recovered_data == inode->size) {
+        inode->size = 0;
         return;
     }
 
@@ -121,7 +123,7 @@ void erase_data(struct inode_t* inode) {
     fseek(disk, (level_2_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     fread(level_2_address, sizeof(unsigned int), NADDR_BLOCK, disk);
     return_data_block(level_2_data_block);
-    for (int i = 0; recovered_data < MAX_LEVEL_1_FILE_SIZE && recovered_data < inode->size; ++i) {
+    for (int i = 0; recovered_data < MAX_FILE_SIZE && recovered_data < inode->size; ++i) {
         level_1_data_block = level_2_address[i];
         fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
@@ -133,52 +135,53 @@ void erase_data(struct inode_t* inode) {
             recovered_data += size_to_recover;
         }
     }
+    inode->size = 0;
 }
 
-void write_data(struct inode_t* inode, char* data) {
+void write_data(struct inode_t* inode, char* data, size_t size) {
     if (inode == NULL || data == NULL) {
         return;
     }
-    size_t data_size = strlen(data);
 
-    for (unsigned short i = 0; inode->size < MAX_DIRECT_FILE_SIZE && inode->size < data_size; ++i) {
+    for (unsigned short i = 0; inode->size < MAX_DIRECT_FILE_SIZE && inode->size < size; ++i) {
         unsigned int current_data_block = get_free_data_block();
         inode->data_address[i] = current_data_block;
-        size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+        size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fwrite(data + inode->size, size_to_write, 1, disk);
         inode->size += size_to_write;
     }
-    if (inode->size == data_size) {
+    if (inode->size == size) {
         return;
     }
 
     unsigned int level_1_data_block = get_free_data_block();
     inode->data_address[NADDR - 2] = level_1_data_block;
     unsigned int level_1_address[NADDR_BLOCK];
-    for (unsigned short i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < data_size; ++i) {
+    for (unsigned short i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < size; ++i) {
         unsigned int current_data_block = get_free_data_block();
         level_1_address[i] = current_data_block;
-        size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+        size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fwrite(data + inode->size, size_to_write, 1, disk);
         inode->size += size_to_write;
     }
     fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     fwrite(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
-    if (inode->size == data_size) {
+    if (inode->size == size) {
         return;
     }
 
     unsigned int level_2_data_block = get_free_data_block();
     inode->data_address[NADDR - 1] = level_2_data_block;
     unsigned int level_2_address[NADDR_BLOCK];
-    for (int i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < data_size; ++i) {
-        level_1_data_block = level_2_address[i];
-        for (unsigned short j = 0; inode->size < MAX_FILE_SIZE && inode->size < data_size; ++j) {
+    for (int i = 0; inode->size < MAX_FILE_SIZE && inode->size < size; ++i) {
+        level_1_data_block = get_free_data_block();
+        level_2_address[i] = level_1_data_block;
+        for (unsigned short j = 0; inode->size < MAX_FILE_SIZE && inode->size < size; ++j) {
             unsigned int current_data_block = get_free_data_block();
             level_1_address[j] = current_data_block;
-            size_t size_to_write = (data_size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : data_size - inode->size;
+            size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
             fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
             fwrite(data + inode->size, size_to_write, 1, disk);
             inode->size += size_to_write;
@@ -220,9 +223,9 @@ unsigned int get_free_data_block() {
         --superblock.num_free_block;
         free_data_block = superblock.free_block_stack[superblock.stack_size];
     } else if (superblock.stack_size == 1 && superblock.free_block_stack[0] != BLOCK_NUM){
-        free_data_block = superblock.free_block_stack[superblock.stack_size];
         --superblock.stack_size;
         --superblock.num_free_block;
+        free_data_block = superblock.free_block_stack[superblock.stack_size];
 
         fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
         fread(&superblock.stack_size, sizeof(size_t), 1, disk);
@@ -245,6 +248,7 @@ void return_data_block(unsigned int n) {
     if (n > BLOCK_NUM - DATA_BLOCK_START) {
         return;
     }
+    ++superblock.num_free_block;
     if (superblock.stack_size == 100) {
         size_t new_stack_size;
 
@@ -256,8 +260,8 @@ void return_data_block(unsigned int n) {
             fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
             fwrite(&new_stack_size, sizeof(size_t), 1, disk);
 
-            fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE + new_stack_size * sizeof(size_t), SEEK_SET);
-            fwrite(&n, sizeof(size_t), 1, disk);
+            fseek(disk, (new_stack_size - 1) * sizeof(unsigned int), SEEK_CUR);
+            fwrite(&n, sizeof(unsigned int), 1, disk);
         } else {
             new_stack_size= 1;
             unsigned int new_stack[1];
@@ -267,12 +271,10 @@ void return_data_block(unsigned int n) {
             fseek(disk, (n + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
             fwrite(&new_stack_size, sizeof(size_t), 1, disk);
             fwrite(new_stack, sizeof(unsigned int), new_stack_size, disk);
-            
         }
     } else if (superblock.stack_size < 100) {
         superblock.free_block_stack[superblock.stack_size] = n;
         ++superblock.stack_size;
-        ++superblock.num_free_block;
     }
 }
 

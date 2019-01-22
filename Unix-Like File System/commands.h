@@ -224,8 +224,47 @@ void resize_text_file(struct inode_t* inode, size_t new_size) {
     erase_data(inode);
     char* data = (char*)malloc(new_size + 1);
     memset(data, 'a', new_size);
-    write_data(inode, data);
+    write_data(inode, data, new_size);
 }
+
+void remove_regular_file(char* path) {
+    if (path == NULL) {
+        return;
+    }
+    struct inode_t* parent_directory = find_parent(current_working_inode, path);
+    if (parent_directory == NULL) {
+        printf("rm: %s: No such file or directory", path);
+    }
+    char* filename = (char*)malloc(strlen(path));
+    get_file_name(path, filename);
+    struct inode_t* file = find_file_from_parent(parent_directory, filename);
+    if (file == NULL) {
+        printf("rm: %s: No such file or directory", path);
+    }
+    if ((file->mode & 07000) == ISDIR) {
+        printf("rm: %s: is a directory\n", path);
+    } else {
+        size_t parent_size = parent_directory->size;
+        char *data = (char *)malloc(parent_size);
+        read_data(parent_directory, data);
+        struct child_file_t* directory_content = (struct child_file_t*)data;
+        for (unsigned i = 0; i < parent_size / sizeof(struct child_file_t); ++i) {
+            if (strcmp(directory_content[i].filename, filename) == 0) {
+                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t)];
+                erase_data(parent_directory);
+                write_data(parent_directory, data, parent_size - sizeof(struct child_file_t));
+            }
+        }
+
+        --file->link_count;
+        if (file->link_count == 0) {
+            erase_data(file);
+            return_inode(file->number);
+        }
+    }
+}
+
+
 
 void present_working_directory() {
     if (current_working_inode->number == 0) {

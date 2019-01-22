@@ -25,7 +25,7 @@ const size_t MAX_LEVEL_1_FILE_SIZE = MAX_DIRECT_FILE_SIZE + NADDR_BLOCK * BLOCK_
 const size_t MAX_FILE_SIZE = MAX_LEVEL_1_FILE_SIZE + NADDR_BLOCK * NADDR_BLOCK * BLOCK_SIZE;
 
 //block 数量
-const unsigned int BLOCK_NUM = 256;
+const unsigned int BLOCK_NUM = 400;
 
 //inode 大小
 const size_t INODE_SIZE = 128;
