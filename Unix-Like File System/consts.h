@@ -51,6 +51,9 @@ const size_t USER_PASSWORD_LENGTH = 32;
 //用户組名最大长度
 const size_t GROUP_NAME_LENGTH = 32;
 
+//用戶信息長度
+const size_t USER_DATA_LENGTH = USER_NAME_LENGTH + USER_PASSWORD_LENGTH + GROUP_NAME_LENGTH;
+
 //文件最大权限
 const unsigned short MAX_FILE_PERMISSION = 0777;
 

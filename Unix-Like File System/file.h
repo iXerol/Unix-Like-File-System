@@ -4,12 +4,19 @@
 #include "commands.h"
 
 void new_volume(void);
+
 void mount_volume(void);
+
 void save(void);
+
 void create_root(void);
+
 void initialize_superblock(void);
+
 void initialize_inodes(void) ;
+
 void initialize_data_block(void);
+
 void write_inode(int n);
 
 void new_volume() {
@@ -40,11 +47,11 @@ void new_volume() {
 
         create_directory(root, "/etc");
         touch_file("etc/passwd");
-        status(root, "/etc/passwd");
-        show();
+//        status(root, "/etc/passwd");
+//        show();
 //        resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);
-        show();
-        status(root, "/etc/passwd");
+//        show();
+//        status(root, "/etc/passwd");
     }
 }
 
@@ -63,11 +70,11 @@ void mount_volume() {
 
         current_working_inode = get_inode_by_num(0);
         strcpy(current_working_directory, "/");
-        show();
+//        show();
 //        resize_text_file(find_file_by_path(current_working_inode, "etc/passwd"), 67585);
 //        remove_regular_file("/etc/passwd");
-        status(current_working_inode, "/etc/passwd");
-        cat("/etc/passwd");
+//        status(current_working_inode, "/etc/passwd");
+//        cat("/etc/passwd");
     }
 }
 

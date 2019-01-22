@@ -27,7 +27,7 @@
 //
 //😎void ln();
 //
-//void cat(char* filename);
+//😎void cat(char* filename);
 //
 //void passwd();
 //
