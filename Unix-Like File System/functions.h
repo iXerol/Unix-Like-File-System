@@ -331,7 +331,7 @@ bool check_execute_permission(struct inode_t* file) {
 
 
 struct inode_t *find_file_from_parent(struct inode_t* directory, char* filename) {
-    if (filename == NULL || directory == NULL || directory->mode / 01000 != ISDIR / 01000) {
+    if (filename == NULL || directory == NULL || (directory->mode & 07000) != ISDIR) {
         return NULL;
     } else if (strchr(filename, '/') != NULL) {
         return find_file_by_path(directory, filename);

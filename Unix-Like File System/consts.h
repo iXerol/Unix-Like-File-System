@@ -66,7 +66,7 @@ const unsigned short ISDIR = 01000;        //directory
 const unsigned short ISCHR = 02000;        //character device
 const unsigned short ISBLK = 03000;        //block device
 const unsigned short ISFIFO = 04000;       //FIFO
-const unsigned short ISLNK = 05000;      //symbolic link
+const unsigned short ISLNK = 05000;        //symbolic link
 const unsigned short ISSOCK = 06000;       //socket
 
 //文件权限

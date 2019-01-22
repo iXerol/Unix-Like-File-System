@@ -11,7 +11,7 @@ int main(int argc, const char * argv[]) {
 
     present_working_directory();
 //    status(current_working_inode, "/");
-    list(current_working_inode, "/");
+    list("");
     save();
     return 0;
 }
