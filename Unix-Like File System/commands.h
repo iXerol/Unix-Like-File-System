@@ -49,6 +49,8 @@ void list(char* path);
 
 void status(struct inode_t* directory, char* path);
 
+void resize_text_file(struct inode_t* inode, size_t new_size);
+
 
 void create_root() {
     //inodes[0] 對應根目錄
@@ -216,6 +218,13 @@ void touch_file(struct inode_t* working_directory, char* path) {
             working_directory->size += sizeof(struct child_file_t);
         }
     }
+}
+
+void resize_text_file(struct inode_t* inode, size_t new_size) {
+    erase_data(inode);
+    char* data = (char*)malloc(new_size + 1);
+    memset(data, 'a', new_size);
+    write_data(inode, data);
 }
 
 void present_working_directory() {
