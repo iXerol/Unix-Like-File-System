@@ -39,7 +39,8 @@ void new_volume() {
         strcpy(current_working_directory, "/");
 
         create_directory(root, "/etc");
-        create_directory(root, "/etc/test");
+        touch_file(root, "etc/passwd");
+        status(root, "/etc/passwd");
     }
 }
 

@@ -118,7 +118,8 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
     }
     if (working_directory == NULL) {
         printf("mkdir: %s: No such file or directory\n", directory_path);
-
+    } else if (find_file_from_parent(working_directory, directory_name) != NULL) {
+        printf("mkdir: %s: File exists\n", directory_path);
     } else if (strlen(directory_name) > FILE_NAME_LENGTH) {
         printf("%s: Too long directory name\n", directory_path);
     } else {

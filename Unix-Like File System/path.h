@@ -4,7 +4,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+void get_parent_path(const char* path, char* parent_path) {
+    if (parent_path == NULL) {
+        return;
+    }
+    if (path == NULL) {
+        strcpy(parent_path, "");
+        return;
+    }
+    char* last_slash = strrchr(path, '/');
+    if (last_slash == NULL) {
+        return;
+    } else {
+        strncpy(parent_path, path, strlen(path) - strlen(last_slash));
+        parent_path[strlen(path) - strlen(last_slash)] = '\0';
+        return;
+    }
+}
+
 void get_file_name(const char* path, char* filename) {
+    if (filename == NULL) {
+        return;
+    }
     if (path == NULL) {
         strcpy(filename, "");
         return;
@@ -28,6 +49,9 @@ void get_file_name(const char* path, char* filename) {
 }
 
 void split_relative_path(const char* path, char* child, char* child_path) {
+    if (child == NULL || child_path == NULL) {
+        return;
+    }
     if (path == NULL) {
         strcpy(child, "");
         strcpy(child_path, "");
