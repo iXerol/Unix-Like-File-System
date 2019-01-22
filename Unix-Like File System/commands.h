@@ -40,7 +40,11 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
 
 void create_directory(struct inode_t* working_directory, char* directory_path);
 
-void touch_file(struct inode_t* working_directory, char* path);
+void touch_file(char* path);
+
+void resize_text_file(struct inode_t* inode, size_t new_size);
+
+void remove_regular_file(char* path);
 
 void present_working_directory(void);
 
@@ -112,16 +116,18 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
     if (directory_path == NULL) {
         return;
     }
+    struct inode_t* parent_directory;
     char* directory_name = (char*)malloc(strlen(directory_path));
     if (strchr(directory_path, '/') != NULL) {
-        working_directory = find_parent(working_directory, directory_path);
+        parent_directory = find_parent(current_working_inode, directory_path);
         get_file_name(directory_path, directory_name);
     } else {
+        parent_directory = current_working_inode;
         strcpy(directory_name, directory_path);
     }
-    if (working_directory == NULL) {
+    if (parent_directory == NULL) {
         printf("mkdir: %s: No such file or directory\n", directory_path);
-    } else if (find_file_from_parent(working_directory, directory_name) != NULL) {
+    } else if (find_file_from_parent(parent_directory, directory_name) != NULL) {
         printf("mkdir: %s: File exists\n", directory_path);
     } else if (strlen(directory_name) > FILE_NAME_LENGTH) {
         printf("%s: Too long directory name\n", directory_path);
@@ -142,46 +148,48 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
         inode->modified_time = time(NULL);
         inode->accessed_time = time(NULL);
         //寫目錄文件
-        unsigned short writing_block = (unsigned short)(working_directory->size / BLOCK_SIZE);
-        size_t writing_position =working_directory->size % BLOCK_SIZE;
+        unsigned short writing_block = (unsigned short)(parent_directory->size / BLOCK_SIZE);
+        size_t writing_position =parent_directory->size % BLOCK_SIZE;
         //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
         if (writing_block < NADDR - 2) {
             if (writing_position == 0) {
-                working_directory->data_address[writing_block] = get_free_data_block();
-                if (working_directory->data_address[writing_block] == BLOCK_NUM) {
+                parent_directory->data_address[writing_block] = get_free_data_block();
+                if (parent_directory->data_address[writing_block] == BLOCK_NUM) {
                     return_inode(inode->number);
                     return;
                 }
             }
-            fseek(disk, (working_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
+            fseek(disk, (parent_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
             fwrite(&directory, sizeof(struct child_file_t), 1, disk);
-            working_directory->size += sizeof(struct child_file_t);
+            parent_directory->size += sizeof(struct child_file_t);
             //創建 . .. 目錄
             char* dot_path = (char*)malloc(strlen(directory_name) + 4);
             strcpy(dot_path, directory_name);
             strcat(dot_path, "/.");
-            link_file(working_directory, dot_path, directory_name);
+            link_file(parent_directory, dot_path, directory_name);
             strcat(dot_path, ".");
-            link_file(working_directory, dot_path, ".");
+            link_file(parent_directory, dot_path, ".");
         }
     }
 }
 
-void touch_file(struct inode_t* working_directory, char* path) {
+void touch_file(char* path) {
     if (path == NULL) {
         return;
     }
+    struct inode_t* parent_directory;
     char* filename = (char*)malloc(strlen(path));
     if (strchr(path, '/') != NULL) {
-        working_directory = find_parent(working_directory, path);
+        parent_directory = find_parent(current_working_inode, path);
         get_file_name(path, filename);
     } else {
+        parent_directory = current_working_inode;
         strcpy(filename, path);
     }
-    if (working_directory == NULL) {
+    if (parent_directory == NULL) {
         printf("touch: %s: No such file or directory\n", path);
-    } else if (find_file_from_parent(working_directory, filename) != NULL) {
-        struct inode_t* inode = find_file_from_parent(working_directory, filename);
+    } else if (find_file_from_parent(parent_directory, filename) != NULL) {
+        struct inode_t* inode = find_file_from_parent(parent_directory, filename);
         inode->modified_time = time(NULL);
         inode->accessed_time = time(NULL);
     } else if (strlen(filename) > FILE_NAME_LENGTH) {
@@ -203,20 +211,20 @@ void touch_file(struct inode_t* working_directory, char* path) {
         inode->modified_time = time(NULL);
         inode->accessed_time = time(NULL);
         //寫目錄文件
-        unsigned short writing_block = (unsigned short)(working_directory->size / BLOCK_SIZE);
-        size_t writing_position =working_directory->size % BLOCK_SIZE;
+        unsigned short writing_block = (unsigned short)(parent_directory->size / BLOCK_SIZE);
+        size_t writing_position =parent_directory->size % BLOCK_SIZE;
         //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
         if (writing_block < NADDR - 2) {
             if (writing_position == 0) {
-                working_directory->data_address[writing_block] = get_free_data_block();
-                if (working_directory->data_address[writing_block] == BLOCK_NUM) {
+                parent_directory->data_address[writing_block] = get_free_data_block();
+                if (parent_directory->data_address[writing_block] == BLOCK_NUM) {
                     return_inode(inode->number);
                     return;
                 }
             }
-            fseek(disk, (working_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
+            fseek(disk, (parent_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
             fwrite(&file, sizeof(struct child_file_t), 1, disk);
-            working_directory->size += sizeof(struct child_file_t);
+            parent_directory->size += sizeof(struct child_file_t);
         }
     }
 }
