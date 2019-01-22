@@ -329,60 +329,6 @@ bool check_execute_permission(struct inode_t* file) {
 
 
 
-void touch_file(struct inode_t* working_directory, char* path) {
-    if (path == NULL) {
-        return;
-    }
-    char* filename = (char*)malloc(strlen(path));
-    if (strchr(path, '/') != NULL) {
-        working_directory = find_parent(working_directory, path);
-        get_file_name(path, filename);
-    } else {
-        strcpy(filename, path);
-    }
-    if (working_directory == NULL) {
-        printf("touch: %s: No such file or directory\n", path);
-    } else if (find_file_from_parent(working_directory, filename) != NULL) {
-        struct inode_t* inode = find_file_from_parent(working_directory, filename);
-        inode->modified_time = time(NULL);
-        inode->accessed_time = time(NULL);
-    } else if (strlen(filename) > FILE_NAME_LENGTH) {
-        printf("%s: Too long file name\n", path);
-    } else {
-        //創建目錄子項
-        struct child_file_t file;
-        memset(&file.filename, '\0', FILE_NAME_LENGTH);
-        file.inode_number = get_free_inode();
-        strcpy(file.filename, filename);
-        //初始化 inode
-        struct inode_t* inode = get_inode_by_num(file.inode_number);
-        inode->link_count = 1;
-        inode->mode = ISREG + MAX_FILE_PERMISSION - superblock.umask;
-        strcpy(inode->user, current_user);
-        strcpy(inode->group, current_group);
-        inode->size = 0;
-        inode->created_time = time(NULL);
-        inode->modified_time = time(NULL);
-        inode->accessed_time = time(NULL);
-        //寫目錄文件
-        unsigned short writing_block = (unsigned short)(working_directory->size / BLOCK_SIZE);
-        size_t writing_position =working_directory->size % BLOCK_SIZE;
-        //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
-        if (writing_block < NADDR - 2) {
-            if (writing_position == 0) {
-                working_directory->data_address[writing_block] = get_free_data_block();
-                if (working_directory->data_address[writing_block] == BLOCK_NUM) {
-                    return_inode(inode->number);
-                    return;
-                }
-            }
-            fseek(disk, (working_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
-            fwrite(&file, sizeof(struct child_file_t), 1, disk);
-            working_directory->size += sizeof(struct child_file_t);
-        }
-    }
-}
-
 struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename) {
     if (filename == NULL || directory == NULL || (directory->mode & 07000) != ISDIR) {
         return NULL;
