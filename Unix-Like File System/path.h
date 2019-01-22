@@ -15,11 +15,10 @@ void get_parent_path(const char* path, char* parent_path) {
     char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
         return;
-    } else {
-        strncpy(parent_path, path, strlen(path) - strlen(last_slash));
-        parent_path[strlen(path) - strlen(last_slash)] = '\0';
-        return;
     }
+    strncpy(parent_path, path, path - last_slash);
+    parent_path[path - last_slash] = '\0';
+    return;
 }
 
 void get_file_name(const char* path, char* filename) {
@@ -33,12 +32,8 @@ void get_file_name(const char* path, char* filename) {
     }
     char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
-        if (strlen(path) > 0) {
-            strcpy(filename, path);
-            //若 path 中無‘/’，則直接拷貝 path 至 filename
-        } else {
-            strcpy(filename, "");
-        }
+        strcpy(filename, path);
+        //若 path 中無‘/’，則直接拷貝 path 至 filename
     } else if (strlen(last_slash) == 1) {
         strcpy(filename, "");
         //若 path 中‘/’後無字符，則將 filename 置為空串
@@ -71,7 +66,7 @@ void split_relative_path(const char* path, char* child, char* child_path) {
         }
     } else {
         strncpy(child, path, strlen(path) - strlen(first_slash));
-        strcpy(child + strlen(path) - strlen(first_slash), "");
+        child[path - first_slash] = '\0';
         strcpy(child_path, first_slash + 1);
         //若 path 中有‘/’，則將其前後分別拷貝給 child 與 child_path
     }
