@@ -13,11 +13,11 @@
 //
 //😎void pwd();
 //
-//void cd(char* path);
+//😎void cd(char* path);
 //
 //😎void mkdir(char* directoryName);
 //
-//void rmdir(char* directoryName);
+//😎void rmdir(char* directoryName);
 //
 //void mv(char* pathBefore, char* pathAfter);
 //
@@ -55,8 +55,6 @@ void touch_file(char* path);
 void resize_text_file(struct inode_t* inode, size_t new_size);
 
 void remove_regular_file(char* path);
-
-void resize_text_file(struct inode_t* inode, size_t new_size);
 
 void cat(char* path);
 
@@ -470,6 +468,50 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
             strcat(dot_path, ".");
             link_file(parent_directory, dot_path, ".");
         }
+    }
+}
+
+void remove_directory(char* path) {
+    if (path == NULL) {
+        return;
+    } else if (strcmp(path + strlen(path) - 2, "/.")) {
+        printf("rmdir: %s: Invalid argument\n", path);
+        return;
+    }
+    struct inode_t* parent_directory = find_parent(current_working_inode, path);
+    if (parent_directory == NULL) {
+        printf("rmdir: %s: No such file or directory\n", path);
+    }
+    char* filename = (char*)malloc(strlen(path));
+    get_file_name(path, filename);
+    struct inode_t* file = find_file_from_parent(parent_directory, filename);
+    if (file == NULL) {
+        printf("rmdir: %s: No such file or directory\n", path);
+    }
+    if ((file->mode & 07000) != ISDIR) {
+        printf("rmdir: %s: Not a directory\n", path);
+    } else if (file->size == sizeof(struct child_file_t) * 2) {
+        size_t parent_size = parent_directory->size;
+        char *data = (char *)malloc(parent_size);
+        read_data(parent_directory, data);
+        struct child_file_t* directory_content = (struct child_file_t*)data;
+        for (unsigned i = 0; i < parent_size / sizeof(struct child_file_t); ++i) {
+            if (strcmp(directory_content[i].filename, filename) == 0) {
+                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t)];
+                erase_data(parent_directory);
+                write_data(parent_directory, data, parent_size - sizeof(struct child_file_t));
+            }
+        }
+
+        --file->link_count;
+        --file->link_count;
+        --parent_directory->link_count;
+        if (file->link_count == 0) {
+            erase_data(file);
+            return_inode(file->number);
+        }
+    } else {
+        printf("rmdir: %s: Directory not empty\n", path);
     }
 }
 

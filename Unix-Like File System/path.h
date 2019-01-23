@@ -83,11 +83,26 @@ bool is_legal_file_name(char* filename) {
         return false;
     }
     for (size_t i = 0; i < length; ++i) {
-        if (!isalnum(filename[i])) {
+        if (!isalnum(filename[i]) && filename[i] != '.') {
             return false;
         }
     }
     return true;
+}
+
+unsigned int string_to_octal(char* string)
+{
+    unsigned int num = 0;
+    if (string != NULL) {
+        size_t length = strlen(string);
+        for (size_t i = 0; i < length; ++i) {
+            if (string[i] < '0' || string[i] > '7') {
+                return num;
+            }
+            num = (num << 3) + (string[i] - '0');
+        }
+    }
+    return num;
 }
 
 // 判斷命令是否以特定字符串開始，若是則將之後的參數分離至 parameters
@@ -102,10 +117,16 @@ bool start_with(char* string, char* start, char* parameters) {
     while (blank_num < string_length && isspace(string[blank_num])) {
         ++blank_num;
     }
+    if (blank_num + start_length > string_length) {
+        return false;
+    }
     for (i = 0 ; i < start_length; ++i) {
         if (string[i + blank_num] != start[i]) {
             return false;
         }
+    }
+    if (i + blank_num < string_length && !isspace(string[i + blank_num])) {
+        return false;
     }
     if (parameters != NULL) {
         strcpy(parameters, string + start_length);

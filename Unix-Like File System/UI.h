@@ -73,7 +73,7 @@ void UI_login() {
             }
             else if (ch == '\r' || ch == '\n') {
                 password[i] = '\0';
-                printf("\n\n");
+                printf("\n");
                 break;
             }
             else {
@@ -111,7 +111,7 @@ void UI_login() {
 void UI_command() {
     bool is_super_user = strcmp(current_user, "root") == 0;
     char command[MAX_COMMAND_LENGTH], parameters[MAX_COMMAND_LENGTH];
-    char first_parameter[MAX_COMMAND_LENGTH], other_parameters[MAX_COMMAND_LENGTH];
+    char first_parameter[MAX_COMMAND_LENGTH], second_parameter[MAX_COMMAND_LENGTH], other_parameters[MAX_COMMAND_LENGTH];
     while (true) {
         printf("ULFS:%s %s%c ", current_working_directory, current_user, is_super_user ? '#' : '$');
         fgets(command, MAX_COMMAND_LENGTH, stdin);
@@ -128,12 +128,22 @@ void UI_command() {
             save();
             fclose(disk);
             exit(0);
+        } else if (start_with(command, "show", parameters)) {
+            show();
         } else if (start_with(command, "pwd", parameters)) {
             present_working_directory();
+        } else if (start_with(command, "umask", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                show_umask();
+            } else {
+                unsigned short new_umask = string_to_octal(first_parameter);
+                change_umask(new_umask);
+            }
         } else if (start_with(command, "cd", parameters)) {
             split_parameters(parameters, first_parameter, other_parameters);
             if (strcmp(first_parameter, "") == 0) {
-                cd(".");
+                cd("/");
             } else {
                 cd(first_parameter);
             }
@@ -144,8 +154,76 @@ void UI_command() {
             } else {
                 list(first_parameter);
             }
+        } else if (start_with(command, "stat", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: stat file\n");
+            } else {
+                status(current_working_inode, first_parameter);
+            }
+        } else if (start_with(command, "mkdir", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: mkdir directory\n");
+            } else {
+                create_directory(current_working_inode, first_parameter);
+            }
+        } else if (start_with(command, "rmdir", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: rmdir directory\n");
+            } else {
+                rmdir(first_parameter);
+            }
+        } else if (start_with(command, "ln", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: ln source_file target_file\n");
+            } else {
+                link_file(current_working_inode, first_parameter, second_parameter);
+            }
+        } else if (start_with(command, "rm", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: rm file\n");
+            } else {
+                remove_regular_file(first_parameter);
+            }
+        } else if (start_with(command, "touch", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: touch file\n");
+            } else {
+                touch_file(first_parameter);
+            }
+        } else if (start_with(command, "edit", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: edit file size\n");
+            } else {
+                struct inode_t* file = find_file_by_path(current_working_inode, first_parameter);
+                if (file == NULL) {
+                    printf("edit: %s: No such file or directory\n", first_parameter);
+                } else if ((file->mode & 07000) != ISREG){
+                    printf("edit: %s: Not a regular file.\n", first_parameter);
+                } else {
+                    size_t new_size = atoi(first_parameter);
+                    resize_text_file(file, new_size);
+                }
+            }
+        } else if (start_with(command, "cat", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                printf("usage: cat file\n");
+            } else {
+                cat(first_parameter);
+            }
         } else {
-            printf("a: command not found\n");
+            printf("Command not found\n");
         }
     }
 }
