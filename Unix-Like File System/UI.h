@@ -193,6 +193,15 @@ void UI_command() {
             } else {
                 link_file(current_working_inode, first_parameter, second_parameter);
             }
+        } else if (start_with(command, "cp", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: cp source_file target_file\n");
+            } else {
+                copy_file(first_parameter, second_parameter);
+            }
         } else if (start_with(command, "rm", parameters)) {
             split_parameters(parameters, first_parameter, other_parameters);
             if (strcmp(first_parameter, "") == 0) {

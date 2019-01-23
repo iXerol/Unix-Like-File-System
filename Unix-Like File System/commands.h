@@ -5,7 +5,7 @@
 
 //😎void ls();
 //
-//void chmod(char* filename, char* username, int privilege);
+//😎void chmod(char* filename, char* username, int privilege);
 //
 //void chown(char* filename, char* username);
 //
@@ -21,7 +21,7 @@
 //
 //void mv(char* pathBefore, char* pathAfter);
 //
-//void cp(char* pathOriginal, char* pathDuplicate);
+//😎void cp(char* pathOriginal, char* pathDuplicate);
 //
 //😎void rm(char* filename);
 //
@@ -47,6 +47,8 @@ void list(char* path);
 void status(struct inode_t* directory, char* path);
 
 void cd(char* path);
+
+void copy_file(char* source_file_path, char* target_file_path);
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
@@ -387,6 +389,82 @@ void cd(char* path) {
         }
     }
 }
+
+void copy_file(char* source_file_path, char* target_file_path) {
+    if (target_file_path == NULL || source_file_path == NULL) {
+        return;
+    }
+    struct inode_t* source_file = find_file_by_path(current_working_inode, source_file_path);
+    struct inode_t* target_parent = find_parent(current_working_inode, target_file_path);
+    struct inode_t* target_file;
+    char* target_file_name = (char*)malloc(strlen(target_file_path));
+    get_file_name(target_file_path, target_file_name);
+    if (source_file == NULL) {
+        printf("cp: %s: No such file or directory\n", source_file_path);
+        return;
+    } else if (target_parent == NULL) {
+        printf("cp: %s: No such file or directory\n", target_file_path);
+        return;
+    } else {
+        target_file = find_file_from_parent(target_parent, target_file_name);
+    }
+
+    if (target_file != NULL) {
+        if ((target_file->mode & 07000) != ISDIR) {
+            printf("ln: %s: File exists\n", target_file_path);
+            return;
+        } else {
+            target_parent = target_file;
+            get_file_name(source_file_path, target_file_name);
+            if (find_file_from_parent(target_parent, target_file_name) != NULL) {
+                printf("ln: %s/%s: File exists\n", target_file_path, target_file_name);
+                return;
+            }
+        }
+    }
+
+    //創建目錄子項
+    struct child_file_t new_file;
+    memset(&new_file, '\0', sizeof(struct child_file_t));
+    strcpy(new_file.filename, target_file_name);
+    new_file.inode_number = get_free_inode();
+    //寫目錄文件
+    unsigned short writing_block = (unsigned short)(target_parent->size / BLOCK_SIZE);
+    size_t writing_position =target_parent->size % BLOCK_SIZE;
+    //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+    if (writing_block < NADDR - 2) {
+        if (writing_position == 0) {
+            target_parent->data_address[writing_block] = get_free_data_block();
+            if (target_parent->data_address[writing_block] == BLOCK_NUM) {
+                return;
+            }
+        }
+        fseek(disk, (target_parent->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
+        fwrite(&new_file, sizeof(struct child_file_t), 1, disk);
+        target_parent->size += sizeof(struct child_file_t);
+        ++source_file->link_count;
+        source_file->accessed_time = time(NULL);
+    }
+
+    //創建新 inode
+    struct inode_t* new_inode = get_inode_by_num(new_file.inode_number);
+    new_inode->link_count = 1;
+    new_inode->mode = source_file->mode;
+    strcpy(new_inode->user, current_user);
+    strcpy(new_inode->group, current_group);
+    new_inode->size = 0;
+    new_inode->created_time = time(NULL);
+    new_inode->modified_time = time(NULL);
+    new_inode->accessed_time = time(NULL);
+
+    //寫數據
+    char* data = (char*)malloc(source_file->size);
+    read_data(source_file, data);
+    write_data(new_inode, data, source_file->size);
+}
+
+
+
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     if (target_file_path == NULL || source_file_path == NULL) {
