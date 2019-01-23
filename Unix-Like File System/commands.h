@@ -75,6 +75,42 @@ void show() {
     printf("\n");
 }
 
+void create_user(char* username, char* password, char* group) {
+    if (username == NULL || password == NULL || group == NULL) {
+        return;
+    }
+    if (strlen(username) <= USER_NAME_LENGTH && strlen(password) <= USER_PASSWORD_LENGTH && strlen(group) <= GROUP_NAME_LENGTH) {
+        struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+        if (passwd == NULL) {
+            passwd = find_file_by_path(current_working_inode, "/etc");
+            if (passwd == NULL) {
+                create_directory(current_working_inode, "/etc");
+            }
+            touch_file("/etc/passwd");
+            passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+        }
+        size_t user_size = passwd->size;
+        char* user_data = malloc(user_size + USER_DATA_LENGTH);
+        read_data(passwd, user_data);
+        char tmp_username[USER_NAME_LENGTH];
+
+        for (size_t i = 0; i < user_size / USER_DATA_LENGTH; ++i) {
+            memset(tmp_username, 0, USER_NAME_LENGTH);
+            strncpy(tmp_username, user_data + i * USER_DATA_LENGTH, USER_NAME_LENGTH);
+            if (strcmp(username, tmp_username) == 0) {
+                printf("User already exists.\n");
+                return;
+            }
+        }
+
+        strcpy(user_data + user_size, username);
+        strcpy(user_data + user_size + USER_NAME_LENGTH, password);
+        strcpy(user_data + user_size + USER_NAME_LENGTH + USER_PASSWORD_LENGTH, group);
+        erase_data(passwd);
+        write_data(passwd, user_data, user_size + USER_DATA_LENGTH);
+    }
+}
+
 void present_working_directory() {
     if (current_working_inode->number == 0) {
         printf("/\n");

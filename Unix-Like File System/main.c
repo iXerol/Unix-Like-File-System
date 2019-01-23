@@ -13,7 +13,6 @@ int main(int argc, const char * argv[]) {
         UI_login();
         printf("Login successfully.\n");
         UI_command();
-        save();
     }
     return 0;
 }

@@ -34,10 +34,20 @@ int getch()
 }
 #endif
 
+void UI_create_user(void);
 void UI_login(void);
 void UI_command(void);
 
+void UI_create_user() {
+
+}
+
 void UI_login() {
+    struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+    if (passwd == NULL) {
+        printf("No user exists, now create one.\n");
+        UI_create_user();
+    }
     char username[USER_NAME_LENGTH];
     char password[USER_PASSWORD_LENGTH * 4];
     do {
@@ -72,7 +82,6 @@ void UI_login() {
             }
         }
 
-        struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
         char* user_data = malloc(passwd->size);
         read_data(passwd, user_data);
         char tmp_username[USER_NAME_LENGTH];
@@ -103,13 +112,23 @@ void UI_command() {
     bool is_super_user = strcmp(current_user, "root") == 0;
     char command[MAX_COMMAND_LENGTH], parameters[MAX_COMMAND_LENGTH];
     while (true) {
-        printf("ULFS:%s %s%c", current_working_directory, current_user, is_super_user ? '#' : '$');
+        printf("ULFS:%s %s%c ", current_working_directory, current_user, is_super_user ? '#' : '$');
         fgets(command, MAX_COMMAND_LENGTH, stdin);
-        if (start_with(command, "pwd", parameters)) {
-            present_working_directory();
+        if (start_with(command, "useradd", parameters)) {
+            if (is_super_user) {
+                UI_create_user();
+            } else {
+                printf("useradd: Permission denied\n");
+            }
+        } else if (start_with(command, "logout", parameters)) {
+            save();
+            break;
         } else if(start_with(command, "exit", parameters)) {
             save();
+            fclose(disk);
             exit(0);
+        } else if (start_with(command, "pwd", parameters)) {
+            present_working_directory();
         } else {
             printf("a: command not found\n");
         }

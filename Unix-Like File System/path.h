@@ -95,10 +95,15 @@ bool start_with(char* string, char* start, char* parameters) {
     if(string == NULL || start == NULL) {
         return false;
     }
+    size_t string_length = strlen(string);
     size_t start_length = strlen(start);
+    size_t blank_num = 0;
     size_t i;
+    while (blank_num < string_length && isblank(string[blank_num])) {
+        ++blank_num;
+    }
     for (i = 0 ; i < start_length; ++i) {
-        if (string[i] != start[i]) {
+        if (string[i + blank_num] != start[i]) {
             return false;
         }
     }
