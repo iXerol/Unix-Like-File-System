@@ -285,48 +285,57 @@ bool check_read_permission(struct inode_t* file) {
     if (file == NULL) {
         return false;
     }
+    if (strcmp(current_user, "root") == 0) {
+        return true;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IRUSR);
-    } else if (strcmp(file->group, current_group) == 0) {
+    }
+    if (strcmp(file->group, current_group) == 0) {
         //當前用戶組為文件所屬用戶組
         return (file->mode & IRGRP);
-    } else {
-        //當前用戶為其他用戶
-        return (file->mode & IROTH);
     }
+    //當前用戶為其他用戶
+    return (file->mode & IROTH);
 }
 
 bool check_write_permission(struct inode_t* file) {
     if (file == NULL) {
         return false;
     }
+    if (strcmp(current_user, "root") == 0) {
+        return true;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IWUSR);
-    } else if (strcmp(file->group, current_group) == 0) {
+    }
+    if (strcmp(file->group, current_group) == 0) {
         //當前用戶組為文件所屬用戶組
         return (file->mode & IWGRP);
-    } else {
-        //當前用戶為其他用戶
-        return (file->mode & IWOTH);
     }
+    //當前用戶為其他用戶
+    return (file->mode & IWOTH);
 }
 
 bool check_execute_permission(struct inode_t* file) {
     if (file == NULL) {
         return false;
     }
+    if (strcmp(current_user, "root") == 0) {
+        return true;
+    }
     if (strcmp(file->user, current_user) == 0) {
         //當前用戶為文件主
         return (file->mode & IXUSR);
-    } else if (strcmp(file->group, current_group) == 0) {
+    }
+    if (strcmp(file->group, current_group) == 0) {
         //當前用戶組為文件所屬用戶組
         return (file->mode & IXGRP);
-    } else {
-        //當前用戶為其他用戶
-        return (file->mode & IXOTH);
     }
+    //當前用戶為其他用戶
+    return (file->mode & IXOTH);
 }
 
 
