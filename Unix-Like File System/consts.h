@@ -88,4 +88,7 @@ const unsigned short IROTH = 00004;       //others has read permission
 const unsigned short IWOTH = 00002;       //others has write permission
 const unsigned short IXOTH = 00001;       //others has execute permission
 
+// 最大命令長度
+const unsigned int MAX_COMMAND_LENGTH = 200;
+
 #endif /* Consts_h */

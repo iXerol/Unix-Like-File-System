@@ -9,13 +9,11 @@ int main(int argc, const char * argv[]) {
         new_volume();
     }
 
-    UI_login();
-    
-//    show();
-
-//    present_working_directory();
-//    status(current_working_inode, "/");
-//    list("/etc");
-    save();
+    while (true) {
+        UI_login();
+        printf("Login successfully.\n");
+        UI_command();
+        save();
+    }
     return 0;
 }

@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
 
 void get_parent_path(const char* path, char* parent_path) {
     if (parent_path == NULL) {
@@ -70,6 +72,40 @@ void split_relative_path(const char* path, char* child, char* child_path) {
         strcpy(child_path, first_slash + 1);
         //若 path 中有‘/’，則將其前後分別拷貝給 child 與 child_path
     }
+}
+
+bool is_legal_file_name(char* filename) {
+    if (filename == NULL) {
+        return false;
+    }
+    size_t length = strlen(filename);
+    if (length == 0) {
+        return false;
+    }
+    for (size_t i = 0; i < length; ++i) {
+        if (!isalnum(filename[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// 判斷命令是否以特定字符串開始，若是則將之後的參數分離至 parameters
+bool start_with(char* string, char* start, char* parameters) {
+    if(string == NULL || start == NULL) {
+        return false;
+    }
+    size_t start_length = strlen(start);
+    size_t i;
+    for (i = 0 ; i < start_length; ++i) {
+        if (string[i] != start[i]) {
+            return false;
+        }
+    }
+    if (parameters != NULL) {
+        strcpy(parameters, string + start_length);
+    }
+    return true;
 }
 
 #endif /* path_h */

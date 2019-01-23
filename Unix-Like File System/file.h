@@ -47,6 +47,7 @@ void new_volume() {
 
         create_directory(root, "/etc");
         touch_file("etc/passwd");
+        create_user("root", "root", "wheel");
 //        status(root, "/etc/passwd");
 //        show();
 //        resize_text_file(find_file_by_path(root, "etc/passwd"), 67584);

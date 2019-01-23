@@ -83,9 +83,9 @@ void present_working_directory() {
 
     struct inode_t* working_directory = current_working_inode;
     struct inode_t* worked_directory = current_working_inode;
-    char working_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] = "";
+    char working_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM];
     memset(working_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
-    char worked_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM] ="";
+    char worked_directory_string[(FILE_NAME_LENGTH + 1) * INODE_NUM];
     memset(worked_directory_string, '\0', (FILE_NAME_LENGTH + 1) * INODE_NUM);
     char* data = (char*)malloc(sizeof(struct child_file_t) * INODE_NUM);
 
