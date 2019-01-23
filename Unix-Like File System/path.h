@@ -16,7 +16,7 @@ void get_parent_path(const char* path, char* parent_path) {
     if (last_slash == NULL) {
         return;
     }
-    strncpy(parent_path, path, path - last_slash);
+    strncpy(parent_path, path, last_slash - path);
     parent_path[path - last_slash] = '\0';
     return;
 }
@@ -65,8 +65,8 @@ void split_relative_path(const char* path, char* child, char* child_path) {
             //若 path 為空串，則將 child 與 child_path 置空
         }
     } else {
-        strncpy(child, path, strlen(path) - strlen(first_slash));
-        child[path - first_slash] = '\0';
+        strncpy(child, path, first_slash - path);
+        child[first_slash - path] = '\0';
         strcpy(child_path, first_slash + 1);
         //若 path 中有‘/’，則將其前後分別拷貝給 child 與 child_path
     }
