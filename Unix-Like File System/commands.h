@@ -29,7 +29,7 @@
 //
 //😎void cat(char* filename);
 //
-//void passwd();
+//😎void passwd();
 //
 //😎void umask();
 
@@ -114,6 +114,41 @@ void create_user(char* username, char* password, char* group) {
         strcpy(user_data + user_size + USER_NAME_LENGTH + USER_PASSWORD_LENGTH, group);
         erase_data(passwd);
         write_data(passwd, user_data, user_size + USER_DATA_LENGTH);
+    }
+}
+
+void change_password(char* old_password, char* new_password) {
+    if (new_password == NULL) {
+        return;
+    }
+    if (strlen(new_password) > USER_PASSWORD_LENGTH) {
+        printf("New password is too long\n");
+    } else {
+        struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+        size_t passwd_size = passwd->size;
+
+        char* user_data = malloc(passwd->size);
+        read_data(passwd, user_data);
+        char tmp_username[USER_NAME_LENGTH];
+        char tmp_password[USER_PASSWORD_LENGTH];
+
+        for (size_t i = 0; i < passwd->size / USER_DATA_LENGTH; ++i) {
+            memset(tmp_username, 0, USER_NAME_LENGTH);
+            memset(tmp_password, 0, USER_PASSWORD_LENGTH);
+            strncpy(tmp_username, user_data + i * USER_DATA_LENGTH, USER_NAME_LENGTH);
+            strncpy(tmp_password, user_data + i * USER_DATA_LENGTH + USER_NAME_LENGTH, USER_PASSWORD_LENGTH);
+            if (strcmp(current_user, tmp_username) == 0) {
+                if (strcmp(tmp_password, old_password) != 0) {
+                    printf("passwd: authentication token failure\n");
+                    return;
+                }
+                strcpy(user_data + i * USER_DATA_LENGTH + USER_NAME_LENGTH, new_password);
+                break;
+            }
+        }
+
+        erase_data(passwd);
+        write_data(passwd, user_data, passwd_size);
     }
 }
 

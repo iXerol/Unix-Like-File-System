@@ -44,11 +44,100 @@ void UI_clear() {
 #endif
 
 void UI_create_user(void);
+void UI_change_password(void);
 void UI_login(void);
 void UI_command(void);
 
 void UI_create_user() {
 
+}
+
+void UI_change_password() {
+    int i;
+    char old_password[USER_PASSWORD_LENGTH * 4];
+    char new_password1[USER_PASSWORD_LENGTH * 4];
+    char new_password2[USER_PASSWORD_LENGTH * 4];
+
+    printf("Changing password for %s.\n", current_user);
+    printf("Old Password:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                old_password[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            old_password[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            old_password[i++] = ch;
+        }
+    }
+
+    printf("New Password:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                new_password1[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            new_password1[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            new_password1[i++] = ch;
+        }
+    }
+
+    printf("Retype New Password:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                new_password2[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            new_password2[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            new_password2[i++] = ch;
+        }
+    }
+    if (strcmp(new_password1, new_password2) != 0) {
+        printf("passwd: try again\n");
+    } else {
+        change_password(old_password, new_password1);
+    }
 }
 
 void UI_login() {
@@ -114,7 +203,6 @@ void UI_login() {
 
         printf("Login incorrect\n");
     } while (true);
-
 }
 
 void UI_command() {
@@ -130,6 +218,8 @@ void UI_command() {
             } else {
                 printf("useradd: Permission denied\n");
             }
+        } else if (start_with(command, "passwd", parameters)) {
+            UI_change_password();
         } else if (start_with(command, "login", parameters) || start_with(command, "logout", parameters)) {
             save();
             break;
