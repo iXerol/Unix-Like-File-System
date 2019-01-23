@@ -130,7 +130,7 @@ void UI_command() {
             } else {
                 printf("useradd: Permission denied\n");
             }
-        } else if (start_with(command, "logout", parameters)) {
+        } else if (start_with(command, "login", parameters) || start_with(command, "logout", parameters)) {
             save();
             break;
         } else if(start_with(command, "exit", parameters)) {
@@ -220,7 +220,7 @@ void UI_command() {
                 } else if ((file->mode & 07000) != ISREG){
                     printf("edit: %s: Not a regular file.\n", first_parameter);
                 } else {
-                    size_t new_size = atoi(first_parameter);
+                    size_t new_size = atoi(second_parameter);
                     resize_text_file(file, new_size);
                 }
             }
@@ -230,6 +230,25 @@ void UI_command() {
                 printf("usage: cat file\n");
             } else {
                 cat(first_parameter);
+            }
+        } else if (start_with(command, "chmod", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: chmod mode file\n");
+            } else {
+                size_t i;
+                for (i = 0; i < strlen(first_parameter); ++i) {
+                    if (first_parameter[i] < '0' || first_parameter[i] > '7') {
+                        printf("chmod: Invalid file mode: %s\n", first_parameter);
+                        break;
+                    }
+                }
+                if (i == strlen(second_parameter)) {
+                    unsigned short privilege = string_to_octal(first_parameter);
+                    change_mode(second_parameter, privilege);
+                }
             }
         } else {
             printf("Command not found\n");

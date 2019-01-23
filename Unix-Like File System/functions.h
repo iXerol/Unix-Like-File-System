@@ -50,6 +50,7 @@ void read_data(struct inode_t* inode, char* data) {
         read_data += size_to_read;
     }
     if (read_data == inode->size) {
+        inode->accessed_time = time(NULL);
         return;
     }
 
@@ -65,6 +66,7 @@ void read_data(struct inode_t* inode, char* data) {
         read_data += size_to_read;
     }
     if (read_data == inode->size) {
+        inode->accessed_time = time(NULL);
         return;
     }
 
@@ -84,6 +86,7 @@ void read_data(struct inode_t* inode, char* data) {
             read_data += size_to_read;
         }
     }
+    inode->accessed_time = time(NULL);
 }
 
 void erase_data(struct inode_t* inode) {
@@ -99,6 +102,8 @@ void erase_data(struct inode_t* inode) {
         retrieveed_data += size_to_retrieve;
     }
     if (retrieveed_data == inode->size) {
+        inode->modified_time = time(NULL);
+        inode->accessed_time = time(NULL);
         inode->size = 0;
         return;
     }
@@ -115,6 +120,8 @@ void erase_data(struct inode_t* inode) {
         retrieveed_data += size_to_retrieve;
     }
     if (retrieveed_data == inode->size) {
+        inode->modified_time = time(NULL);
+        inode->accessed_time = time(NULL);
         inode->size = 0;
         return;
     }
@@ -137,6 +144,8 @@ void erase_data(struct inode_t* inode) {
         }
     }
     inode->size = 0;
+    inode->modified_time = time(NULL);
+    inode->accessed_time = time(NULL);
 }
 
 void write_data(struct inode_t* inode, char* data, size_t size) {
@@ -153,6 +162,8 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
         inode->size += size_to_write;
     }
     if (inode->size == size) {
+        inode->modified_time = time(NULL);
+        inode->accessed_time = time(NULL);
         return;
     }
 
@@ -170,6 +181,8 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
     fseek(disk, (level_1_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     fwrite(level_1_address, sizeof(unsigned int), NADDR_BLOCK, disk);
     if (inode->size == size) {
+        inode->modified_time = time(NULL);
+        inode->accessed_time = time(NULL);
         return;
     }
 
@@ -192,6 +205,8 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
     }
     fseek(disk, (level_2_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     fwrite(level_2_address, sizeof(unsigned int), NADDR_BLOCK, disk);
+    inode->modified_time = time(NULL);
+    inode->accessed_time = time(NULL);
 }
 
 
@@ -280,7 +295,15 @@ void return_data_block(unsigned int n) {
 }
 
 
-
+bool is_owner(struct inode_t* file) {
+    if (strcmp(current_user, "root") == 0) {
+        return true;
+    } else if (strcmp(current_user, file->user) == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 bool check_read_permission(struct inode_t* file) {
     if (file == NULL) {

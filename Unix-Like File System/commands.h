@@ -38,6 +38,8 @@ void show(void);
 
 void create_user(char* username, char* password, char* group);
 
+void change_mode(char* filename, unsigned short privilege);
+
 void present_working_directory(void);
 
 void list(char* path);
@@ -110,6 +112,25 @@ void create_user(char* username, char* password, char* group) {
         strcpy(user_data + user_size + USER_NAME_LENGTH + USER_PASSWORD_LENGTH, group);
         erase_data(passwd);
         write_data(passwd, user_data, user_size + USER_DATA_LENGTH);
+    }
+}
+
+void change_mode(char* path, unsigned short privilege) {
+    if (path == NULL) {
+        return;
+    }
+    if (privilege > 0777) {
+        printf("chmod: Invalid file mode: %03o\n", privilege);
+    } else {
+        struct inode_t* file = find_file_by_path(current_working_inode, path);
+        if (file == NULL) {
+            printf("chmod: %o: No such file or directory\n", privilege);
+        } else if (!is_owner(file)){
+            printf("chmod: Unable to change file mode on %s: Operation not permitted\n", path);
+        } else {
+            file->mode = (file->mode & 07000 + privilege);
+            file->accessed_time = time(NULL);
+        }
     }
 }
 
