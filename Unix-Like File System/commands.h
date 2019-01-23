@@ -36,11 +36,15 @@
 
 void show(void);
 
+void create_user(char* username, char* password, char* group);
+
 void present_working_directory(void);
 
 void list(char* path);
 
 void status(struct inode_t* directory, char* path);
+
+void cd(char* path);
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
@@ -331,6 +335,37 @@ void status(struct inode_t* directory, char* path) {
         printf("Last Accessed Time: %s", asctime(localtime(&inode->accessed_time)));
         printf("inode number: %u\n", inode->number);
         printf("Link Count: %u\n", inode->link_count);
+    }
+}
+
+void cd(char* path) {
+    if (path == NULL) {
+        return;
+    }
+    struct inode_t* inode = find_file_from_parent(current_working_inode, path);
+    if (inode == NULL) {
+        printf("cd: %s: No such file or directory\n", path);
+    } else if ((inode->mode & 07000) != ISDIR) {
+        printf("cd: %s: Not a directory\n", path);
+    } else {
+        current_working_inode = inode;
+
+        if (inode->number == 0) {
+            strcpy(current_working_directory, "/");
+        } else {
+            struct inode_t* parent = find_file_from_parent(inode, "..");
+
+            char *data = (char *)malloc(parent->size);
+            read_data(parent, data);
+            struct child_file_t* directory_content = (struct child_file_t*)data;
+
+            for (int i = 0; i < parent->size / sizeof(struct child_file_t); ++i) {
+                if (directory_content[i].inode_number == inode->number) {
+                    strcpy(current_working_directory, directory_content[i].filename);
+                    break;
+                }
+            }
+        }
     }
 }
 

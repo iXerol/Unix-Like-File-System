@@ -111,6 +111,7 @@ void UI_login() {
 void UI_command() {
     bool is_super_user = strcmp(current_user, "root") == 0;
     char command[MAX_COMMAND_LENGTH], parameters[MAX_COMMAND_LENGTH];
+    char first_parameter[MAX_COMMAND_LENGTH], other_parameters[MAX_COMMAND_LENGTH];
     while (true) {
         printf("ULFS:%s %s%c ", current_working_directory, current_user, is_super_user ? '#' : '$');
         fgets(command, MAX_COMMAND_LENGTH, stdin);
@@ -129,6 +130,20 @@ void UI_command() {
             exit(0);
         } else if (start_with(command, "pwd", parameters)) {
             present_working_directory();
+        } else if (start_with(command, "cd", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                cd(".");
+            } else {
+                cd(first_parameter);
+            }
+        } else if (start_with(command, "ls", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            if (strcmp(first_parameter, "") == 0) {
+                list(".");
+            } else {
+                list(first_parameter);
+            }
         } else {
             printf("a: command not found\n");
         }

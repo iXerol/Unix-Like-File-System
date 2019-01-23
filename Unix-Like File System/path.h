@@ -99,7 +99,7 @@ bool start_with(char* string, char* start, char* parameters) {
     size_t start_length = strlen(start);
     size_t blank_num = 0;
     size_t i;
-    while (blank_num < string_length && isblank(string[blank_num])) {
+    while (blank_num < string_length && isspace(string[blank_num])) {
         ++blank_num;
     }
     for (i = 0 ; i < start_length; ++i) {
@@ -111,6 +111,29 @@ bool start_with(char* string, char* start, char* parameters) {
         strcpy(parameters, string + start_length);
     }
     return true;
+}
+
+void split_parameters(const char* parameters, char* first_parameter, char* other_parameters) {
+    if (first_parameter == NULL || other_parameters == NULL) {
+        return;
+    }
+    if (parameters == NULL) {
+        strcpy(first_parameter, "");
+        strcpy(other_parameters, "");
+        return;
+        //若 parameters 為空指針，則將 first_parameter 與 other_parameters 置空
+    }
+
+    size_t length = strlen(parameters);
+    size_t blank_num = 0;
+    size_t i;
+    while (blank_num < length && isspace(parameters[blank_num])) {
+        ++blank_num;
+    }
+    for (i = 0 ; i < length - blank_num && !isspace(parameters[i + blank_num]); ++i);
+    strncpy(first_parameter, parameters + blank_num, i);
+    first_parameter[i] = '\0';
+    strcpy(other_parameters, parameters + blank_num + i);
 }
 
 #endif /* path_h */
