@@ -3,6 +3,7 @@
 #include "UI.h"
 
 int main(int argc, const char * argv[]) {
+    UI_clear();
     if (fopen(FILENAME, "r")) {
         mount_volume();
     } else {

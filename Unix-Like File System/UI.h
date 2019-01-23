@@ -8,6 +8,10 @@
 
 #include <conio.h>        //windows中用于不回显字符
 
+void UI_clear() {
+    system("cls");
+}                            //在 Windows 中调用 cls 命令清屏
+
 #else
 
 #include<termios.h>   //*nix下用于自定义不回显字符
@@ -32,6 +36,11 @@ int getch()
     else if(c == 127) c = '\b';
     return c;
 }
+
+void UI_clear() {
+    system("clear");
+}                            //在 *nix 中调用 clear 命令清屏
+
 #endif
 
 void UI_create_user(void);
