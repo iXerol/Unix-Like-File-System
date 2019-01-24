@@ -492,6 +492,7 @@ void UI_command() {
         } else {
             printf("Command not found\n");
         }
+        save();
     }
 }
 

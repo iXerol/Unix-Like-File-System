@@ -25,7 +25,7 @@ struct superblock_t {
 
     uint64_t free_inodes;
 
-    unsigned int free_block_stack[100];
+    unsigned int free_block_stack[DATA_BLOCK_STACK_SIZE];
     size_t stack_size;
 };
 

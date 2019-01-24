@@ -155,6 +155,9 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
 
     for (unsigned short i = 0; inode->size < MAX_DIRECT_FILE_SIZE && inode->size < size; ++i) {
         unsigned int current_data_block = get_free_data_block();
+        if (current_data_block == BLOCK_NUM) {
+            return;
+        }
         inode->data_address[i] = current_data_block;
         size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
@@ -168,10 +171,16 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
     }
 
     unsigned int level_1_data_block = get_free_data_block();
+    if (level_1_data_block == BLOCK_NUM) {
+        return;
+    }
     inode->data_address[NADDR - 2] = level_1_data_block;
     unsigned int level_1_address[NADDR_BLOCK];
     for (unsigned short i = 0; inode->size < MAX_LEVEL_1_FILE_SIZE && inode->size < size; ++i) {
         unsigned int current_data_block = get_free_data_block();
+        if (current_data_block == BLOCK_NUM) {
+            return;
+        }
         level_1_address[i] = current_data_block;
         size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
         fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
@@ -187,13 +196,22 @@ void write_data(struct inode_t* inode, char* data, size_t size) {
     }
 
     unsigned int level_2_data_block = get_free_data_block();
+    if (level_2_data_block == BLOCK_NUM) {
+        return;
+    }
     inode->data_address[NADDR - 1] = level_2_data_block;
     unsigned int level_2_address[NADDR_BLOCK];
     for (int i = 0; inode->size < MAX_FILE_SIZE && inode->size < size; ++i) {
         level_1_data_block = get_free_data_block();
+        if (level_1_data_block == BLOCK_NUM) {
+            return;
+        }
         level_2_address[i] = level_1_data_block;
         for (unsigned short j = 0; inode->size < MAX_FILE_SIZE && inode->size < size; ++j) {
             unsigned int current_data_block = get_free_data_block();
+            if (current_data_block == BLOCK_NUM) {
+                return;
+            }
             level_1_address[j] = current_data_block;
             size_t size_to_write = (size - inode->size >= BLOCK_SIZE) ? BLOCK_SIZE : size - inode->size;
             fseek(disk, (current_data_block + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
@@ -244,8 +262,12 @@ unsigned int get_free_data_block() {
         free_data_block = superblock.free_block_stack[superblock.stack_size];
 
         fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
-        fread(&superblock.stack_size, sizeof(size_t), 1, disk);
-        fread(superblock.free_block_stack, sizeof(unsigned int), superblock.stack_size, disk);
+        fread(superblock.free_block_stack, sizeof(unsigned int), DATA_BLOCK_STACK_SIZE, disk);
+        if (superblock.free_block_stack[0] == BLOCK_NUM) {
+            superblock.stack_size = superblock.num_free_block + 1;
+        } else {
+            superblock.stack_size = DATA_BLOCK_STACK_SIZE;
+        }
     } else {
         printf("There is no enough space to create file.\n");
         return BLOCK_NUM;   
@@ -265,30 +287,13 @@ void return_data_block(unsigned int n) {
         return;
     }
     ++superblock.num_free_block;
-    if (superblock.stack_size == 100) {
-        size_t new_stack_size;
+    if (superblock.stack_size == DATA_BLOCK_STACK_SIZE) {
+        fseek(disk, (n + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
+        fwrite(superblock.free_block_stack, sizeof(unsigned int), superblock.stack_size, disk);
 
-        fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
-        fread(&new_stack_size, sizeof(size_t), 1, disk);
-
-        if (new_stack_size < 100) {
-            ++new_stack_size;
-            fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
-            fwrite(&new_stack_size, sizeof(size_t), 1, disk);
-
-            fseek(disk, (new_stack_size - 1) * sizeof(unsigned int), SEEK_CUR);
-            fwrite(&n, sizeof(unsigned int), 1, disk);
-        } else {
-            new_stack_size= 1;
-            unsigned int new_stack[1];
-            new_stack[0] = superblock.free_block_stack[0];
-            superblock.free_block_stack[0] = n;
-
-            fseek(disk, (n + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
-            fwrite(&new_stack_size, sizeof(size_t), 1, disk);
-            fwrite(new_stack, sizeof(unsigned int), new_stack_size, disk);
-        }
-    } else if (superblock.stack_size < 100) {
+        superblock.free_block_stack[0] = n;
+        superblock.stack_size = 1;
+    } else if (superblock.stack_size < DATA_BLOCK_STACK_SIZE) {
         superblock.free_block_stack[superblock.stack_size] = n;
         ++superblock.stack_size;
     }

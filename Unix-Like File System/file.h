@@ -102,25 +102,24 @@ void initialize_inodes() {
 
 void initialize_data_block() {
     size_t stack_size;
-    unsigned int free_block_stack[100];
+    unsigned int free_block_stack[DATA_BLOCK_STACK_SIZE];
     unsigned int num_data_block = BLOCK_NUM - DATA_BLOCK_START;
     unsigned int i;
-    superblock.stack_size = 100;
-    for (i = 1; i <= 100; ++i) {
-        superblock.free_block_stack[i - 1] = i;
+    superblock.stack_size = DATA_BLOCK_STACK_SIZE;
+    for (i = 0; i < DATA_BLOCK_STACK_SIZE; ++i) {
+        superblock.free_block_stack[i] = i;
     }
     fseek(disk, (superblock.free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);
     while (i < num_data_block) {
-        stack_size = (num_data_block - i < 100) ? num_data_block - i : 100;
+        stack_size = (num_data_block - i < DATA_BLOCK_STACK_SIZE) ? num_data_block - i : DATA_BLOCK_STACK_SIZE;
         for (int j = 0; j < stack_size; ++i, ++j) {
             free_block_stack[j] = i;
         }
-        if (stack_size < 100) {
+        if (stack_size < DATA_BLOCK_STACK_SIZE) {
             free_block_stack[stack_size] = free_block_stack[0];
             free_block_stack[0] = BLOCK_NUM;
             ++stack_size;
         }
-        fwrite(&stack_size, sizeof(size_t), 1, disk);
         fwrite(free_block_stack, sizeof(unsigned int), stack_size, disk);
         if (free_block_stack[0] != BLOCK_NUM) {
             fseek(disk, (free_block_stack[0] + DATA_BLOCK_START) * BLOCK_SIZE, SEEK_SET);

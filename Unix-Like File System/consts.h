@@ -39,6 +39,8 @@ const unsigned int INODE_BLOCK_START = 2;
 
 const unsigned int DATA_BLOCK_START = INODE_BLOCK_START + INODE_NUM * INODE_SIZE / BLOCK_SIZE;
 
+const size_t DATA_BLOCK_STACK_SIZE = 100;
+
 
 const size_t FILE_NAME_LENGTH = 32 - sizeof(unsigned int);
 

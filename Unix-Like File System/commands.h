@@ -330,7 +330,7 @@ void list(char* path) {
                    (inode->mode & IXOTH) != 0 ? 'x' : '-');
 
             printf("%3d ", inode->link_count);
-            printf("%10s%10s", inode->user, inode->group);
+            printf("%32s%32s", inode->user, inode->group);
             printf("%8zu", inode->size);
 
             char time[26];
@@ -377,7 +377,7 @@ void list(char* path) {
                (inode->mode & IXOTH) != 0 ? 'x' : '-');
 
         printf("%3d ", inode->link_count);
-        printf("%10s%10s", inode->user, inode->group);
+        printf("%32s%32s", inode->user, inode->group);
         printf("%8zu", inode->size);
 
         char time[26];
