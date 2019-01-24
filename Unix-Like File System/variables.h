@@ -18,4 +18,4 @@ char current_working_directory[FILE_NAME_LENGTH];
 
 struct inode_t* current_working_inode;
 
-#endif
+#endif /* variables_h */
