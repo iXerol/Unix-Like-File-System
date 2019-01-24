@@ -3,37 +3,6 @@
 
 #include "functions.h"
 
-//😎void ls();
-//
-//😎void chmod(char* filename, char* username, int privilege);
-//
-//void chown(char* filename, char* username);
-//
-//void chgrp(char* filename, char* groupname);
-//
-//😎void pwd();
-//
-//😎void cd(char* path);
-//
-//😎void mkdir(char* directoryName);
-//
-//😎void rmdir(char* directoryName);
-//
-//😎void mv(char* pathBefore, char* pathAfter);
-//
-//😎void cp(char* pathOriginal, char* pathDuplicate);
-//
-//😎void rm(char* filename);
-//
-//😎void ln();
-//
-//😎void cat(char* filename);
-//
-//😎void passwd();
-//
-//😎void umask();
-
-
 void show(void);
 
 void create_user(char* username, char* password, char* group);
@@ -43,6 +12,8 @@ void change_password(char* old_password, char* new_password);
 void change_mode(char* filename, unsigned short privilege);
 
 void change_owner(char* path, char* user);
+
+void change_group(char* path, char* group);
 
 void present_working_directory(void);
 
@@ -204,6 +175,35 @@ void change_owner(char* path, char* user) {
         }
     }
     printf("chown: %s: illegal user name\n", user);
+}
+
+void change_group(char* path, char* group) {
+    if (path == NULL || group == NULL) {
+        return;
+    }
+    struct inode_t* inode = find_file_by_path(current_working_inode, path);
+    if (inode == NULL) {
+        printf("chgrp: %s: No such file or directory\n", path);
+        return;
+    }
+    if (!is_owner(inode)) {
+        printf("chgrp: %s: Operation not permitted\n", path);
+    }
+
+    struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+    char* user_data = malloc(passwd->size);
+    read_data(passwd, user_data);
+    char tmp_group[GROUP_NAME_LENGTH];
+
+    for (size_t i = 0; i < passwd->size / USER_DATA_LENGTH; ++i) {
+        memset(tmp_group, 0, GROUP_NAME_LENGTH);
+        strncpy(tmp_group, user_data + i * USER_DATA_LENGTH + USER_NAME_LENGTH + USER_PASSWORD_LENGTH, GROUP_NAME_LENGTH);
+        if (strcmp(group, tmp_group) == 0) {
+            strcpy(inode->group, group);
+            return;
+        }
+    }
+    printf("chgrp: %s: illegal group name\n", group);
 }
 
 void present_working_directory() {

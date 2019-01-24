@@ -367,6 +367,15 @@ void UI_command() {
             } else {
                 change_owner(second_parameter, first_parameter);
             }
+        } else if (start_with(command, "chgrp", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: chgrp group file\n");
+            } else {
+                change_group(second_parameter, first_parameter);
+            }
         } else {
             printf("Command not found\n");
         }
