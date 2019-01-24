@@ -59,6 +59,9 @@ void show() {
 }
 
 void create_user(char* username, char* password, char* group) {
+    if (strcmp(current_user, "root") != 0) {
+        printf("useradd: Permission denied\n");
+    }
     if (username == NULL || password == NULL || group == NULL) {
         return;
     }
@@ -280,6 +283,8 @@ void list(char* path) {
     }
     if (directory == NULL) {
         printf("ls: %s: No such file or directory\n", path);
+    } else if (check_read_permission(directory)) {
+        printf("ls: %s: Permission denied\n", path);
     } else if ((directory->mode & 07000) == ISDIR) {
         char *data = (char *)malloc(directory->size);
         read_data(directory, data);
@@ -443,7 +448,7 @@ void cd(char* path) {
     if (path == NULL) {
         return;
     }
-    struct inode_t* inode = find_file_from_parent(current_working_inode, path);
+    struct inode_t* inode = find_file_by_path(current_working_inode, path);
     if (inode == NULL) {
         printf("cd: %s: No such file or directory\n", path);
     } else if ((inode->mode & 07000) != ISDIR) {
@@ -509,6 +514,8 @@ void copy_file(char* source_file_path, char* target_file_path) {
     if (!is_legal_file_name(target_file_name)) {
         printf("cp: %s: Illegal filename\n", target_file_name);
         return;
+    } else if (check_read_permission(source_file)) {
+        printf("cp: %s: Permission denied\n", source_file_path);
     }
 
     //創建目錄子項
@@ -601,6 +608,8 @@ void move_file(char* source_file_path, char* target_file_path) {
     if (!is_legal_file_name(target_file_name)) {
         printf("mv: %s: Illegal filename\n", target_file_name);
         return;
+    } else if (check_write_permission(source_file)) {
+        printf("mv: %s: Permission denied\n", source_file_path);
     }
 
     //確保新目錄不為舊目錄子目錄
@@ -794,6 +803,8 @@ void remove_directory(char* path) {
     }
     if ((file->mode & 07000) != ISDIR) {
         printf("rmdir: %s: Not a directory\n", path);
+    } else if (check_write_permission(file)) {
+        printf("rmdir: %s: Permission denied\n", path);
     } else if (file->size == sizeof(struct child_file_t) * 2) {
         size_t parent_size = parent_directory->size;
         char *data = (char *)malloc(parent_size);
@@ -879,6 +890,9 @@ void touch_file(char* path) {
 }
 
 void resize_text_file(struct inode_t* inode, size_t new_size) {
+    if (check_write_permission(inode)) {
+        printf("edit: Permission denied\n");
+    }
     erase_data(inode);
     char* data = (char*)malloc(new_size + 1);
     memset(data, 'a', new_size);
@@ -901,6 +915,8 @@ void remove_regular_file(char* path) {
     }
     if ((file->mode & 07000) == ISDIR) {
         printf("rm: %s: is a directory\n", path);
+    } else if (check_write_permission(file)) {
+        printf("rm: %s: Permission denied\n", path);
     } else {
         size_t parent_size = parent_directory->size;
         char *data = (char *)malloc(parent_size);
@@ -931,6 +947,8 @@ void cat(char* path) {
         printf("cat: %s: No such file or directory\n", path);
     } else if ((inode->mode & 07000) == ISDIR) {
         printf("cat: %s: Is a directory\n", path);
+    } else if (check_read_permission(inode)) {
+        printf("cat: %s: Permission denied\n", path);
     } else {
         char* data = (char*)malloc(inode->size);
         read_data(inode, data);
