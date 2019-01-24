@@ -30,18 +30,18 @@ void get_file_name(const char* path, char* filename) {
     if (path == NULL) {
         strcpy(filename, "");
         return;
-        //若 path 為空指針，則將 filename 置為空串
+        
     }
     char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
         strcpy(filename, path);
-        //若 path 中無‘/’，則直接拷貝 path 至 filename
+        
     } else if (strlen(last_slash) == 1) {
         strcpy(filename, "");
-        //若 path 中‘/’後無字符，則將 filename 置為空串
+        
     } else {
         strcpy(filename, last_slash + 1);
-        //從 path 中最後出現的‘/’後一字符開始拷貝至 filename
+        
     }
 }
 
@@ -53,24 +53,24 @@ void split_relative_path(const char* path, char* child, char* child_path) {
         strcpy(child, "");
         strcpy(child_path, "");
         return;
-        //若 path 為空指針，則將 child 與 child_path 置空
+        
     }
     char* first_slash = strchr(path, '/');
     if (first_slash == NULL) {
         if (strlen(path) > 0) {
             strcpy(child, path);
             strcpy(child_path, "");
-            //若 path 中無‘/’，則直接拷貝 path 至 child，並將 child_path 置空
+            
         } else {
             strcpy(child, "");
             strcpy(child_path, "");
-            //若 path 為空串，則將 child 與 child_path 置空
+            
         }
     } else {
         strncpy(child, path, first_slash - path);
         child[first_slash - path] = '\0';
         strcpy(child_path, first_slash + 1);
-        //若 path 中有‘/’，則將其前後分別拷貝給 child 與 child_path
+        
     }
 }
 
@@ -105,7 +105,7 @@ unsigned int string_to_octal(char* string)
     return num;
 }
 
-// 判斷命令是否以特定字符串開始，若是則將之後的參數分離至 parameters
+
 bool start_with(char* string, char* start, char* parameters) {
     if(string == NULL || start == NULL) {
         return false;
@@ -142,7 +142,7 @@ void split_parameters(const char* parameters, char* first_parameter, char* other
         strcpy(first_parameter, "");
         strcpy(other_parameters, "");
         return;
-        //若 parameters 為空指針，則將 first_parameter 與 other_parameters 置空
+        
     }
 
     size_t length = strlen(parameters);
@@ -157,4 +157,4 @@ void split_parameters(const char* parameters, char* first_parameter, char* other
     strcpy(other_parameters, parameters + blank_num + i);
 }
 
-#endif /* strings_h */
+#endif

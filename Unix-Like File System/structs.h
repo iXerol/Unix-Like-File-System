@@ -4,16 +4,16 @@
 #include "consts.h"
 
 struct inode_t {
-    unsigned int number;		//inode number
-    unsigned int data_address[NADDR];		//Number of data blocks where the file stored.
-    unsigned short link_count;		//连接数
-    unsigned short mode;		//文件類型及权限
-    char user[32];		//文件所属用户
-    char group[32];		//文件所属组
-    size_t size;		//文件大小
-    time_t created_time;		//文件創建時間
-    time_t modified_time;        //文件創建時間
-    time_t accessed_time;        //文件創建時間
+    unsigned int number;		
+    unsigned int data_address[NADDR];		
+    unsigned short link_count;		
+    unsigned short mode;		
+    char user[32];		
+    char group[32];		
+    size_t size;		
+    time_t created_time;		
+    time_t modified_time;        
+    time_t accessed_time;        
 };
 
 struct superblock_t {
@@ -34,4 +34,4 @@ struct child_file_t {
     unsigned int inode_number;
 };
 
-#endif /* structs_h */
+#endif

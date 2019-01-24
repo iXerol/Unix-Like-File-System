@@ -6,30 +6,30 @@
 
 #ifdef _WIN32
 
-#include <conio.h>        //windows中用于不回显字符
+#include <conio.h>        
 
 void UI_clear() {
     system("cls");
-}                            //在 Windows 中调用 cls 命令清屏
+}                            
 
 #else
 
-#include<termios.h>   //*nix下用于自定义不回显字符
-#include<unistd.h>    //*nix下用于自定义不回显字符
+#include<termios.h>   
+#include<unistd.h>    
 int getch()
 {
     int c = 0;
     struct termios org_opts, new_opts;
     int res = 0;
-    //-----  store old settings -----------
+    
     res = tcgetattr(STDIN_FILENO, &org_opts);
     assert(res == 0);
-    //---- set new terminal parms --------
+    
     memcpy(&new_opts, &org_opts, sizeof(new_opts));
     new_opts.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOKE | ICRNL);
     tcsetattr(STDIN_FILENO, TCSANOW, &new_opts);
     c = getchar();
-    //------  restore old settings ---------
+    
     res = tcsetattr(STDIN_FILENO, TCSANOW, &org_opts);
     assert(res == 0);
     if(c == '\n') c = '\r';
@@ -39,7 +39,7 @@ int getch()
 
 void UI_clear() {
     system("clear");
-}                            //在 *nix 中调用 clear 命令清屏
+}                            
 
 #endif
 
@@ -500,4 +500,4 @@ void UI_command() {
 
 
 
-#endif /* UI_h */
+#endif

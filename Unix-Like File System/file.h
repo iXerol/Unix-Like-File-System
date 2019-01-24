@@ -128,7 +128,7 @@ void initialize_data_block() {
 }
 
 void create_root() {
-    //inodes[0] 對應根目錄
+    
     inodes[0].link_count = 1;
     strcpy(inodes[0].user, current_user);
     strcpy(inodes[0].group, current_group);
@@ -144,4 +144,4 @@ void write_inode(int n) {
     fwrite(inodes + n, sizeof(struct inode_t), 1, disk);
 }
 
-#endif /* file_h */
+#endif

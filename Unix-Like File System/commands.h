@@ -95,7 +95,7 @@ void create_user(char* username, char* password, char* group) {
         erase_data(passwd);
         write_data(passwd, user_data, user_size + USER_DATA_LENGTH);
 
-        //以用戶名義創建用戶主目錄
+        
         strcpy(current_user, username);
         strcpy(current_group, group);
         char user_directory[USER_NAME_LENGTH + 8] = "/home/";
@@ -269,7 +269,7 @@ void present_working_directory() {
             strcat(working_directory_string, directory_content[i].filename);
             strcat(working_directory_string, worked_directory_string);
             strcpy(worked_directory_string, working_directory_string);
-            //            break;
+            
         }
     }
 
@@ -290,7 +290,7 @@ void list(char* path) {
         read_data(directory, data);
         struct child_file_t* directory_content = (struct child_file_t*)data;
 
-        //        printf("Mode    Link count   User   Group    Size    Last modified    Filename\n");
+        
 
         for (int i = 0; i < directory->size / sizeof(struct child_file_t); ++i) {
             struct inode_t* inode = get_inode_by_num(directory_content[i].inode_number);
@@ -518,15 +518,15 @@ void copy_file(char* source_file_path, char* target_file_path) {
         printf("cp: %s: Permission denied\n", source_file_path);
     }
 
-    //創建目錄子項
+    
     struct child_file_t new_file;
     memset(&new_file, '\0', sizeof(struct child_file_t));
     strcpy(new_file.filename, target_file_name);
     new_file.inode_number = get_free_inode();
-    //寫目錄文件
+    
     unsigned short writing_block = (unsigned short)(target_parent->size / BLOCK_SIZE);
     size_t writing_position =target_parent->size % BLOCK_SIZE;
-    //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+    
     if (writing_block < NADDR - 2) {
         if (writing_position == 0) {
             target_parent->data_address[writing_block] = get_free_data_block();
@@ -541,7 +541,7 @@ void copy_file(char* source_file_path, char* target_file_path) {
         source_file->accessed_time = time(NULL);
     }
 
-    //創建新 inode
+    
     struct inode_t* new_inode = get_inode_by_num(new_file.inode_number);
     new_inode->link_count = 1;
     new_inode->mode = source_file->mode;
@@ -552,7 +552,7 @@ void copy_file(char* source_file_path, char* target_file_path) {
     new_inode->modified_time = time(NULL);
     new_inode->accessed_time = time(NULL);
 
-    //寫數據
+    
     char* data = (char*)malloc(source_file->size);
     read_data(source_file, data);
     write_data(new_inode, data, source_file->size);
@@ -572,7 +572,7 @@ void move_file(char* source_file_path, char* target_file_path) {
     }
     source_file = find_file_from_parent(source_parent, source_file_name);
 
-    //路徑最後為 . ..
+    
     if (strcmp(source_file_name, ".") == 0 || strcmp(source_file_name, "..") == 0) {
         printf("mv: rename %s to %s: Invalid argument\n", source_file_path, target_file_path);
     }
@@ -612,13 +612,13 @@ void move_file(char* source_file_path, char* target_file_path) {
         printf("mv: %s: Permission denied\n", source_file_path);
     }
 
-    //確保新目錄不為舊目錄子目錄
+    
     if (is_descendant_directory(source_file, target_parent)) {
         printf("mv: rename %s to %s: Invalid argument\n", source_file_path, target_file_path);
         return;
     }
 
-    //刪除舊目錄記錄
+    
     size_t parent_size = source_parent->size;
     char *source_parent_directory_data = (char *)malloc(parent_size);
     read_data(source_parent, source_parent_directory_data);
@@ -631,15 +631,15 @@ void move_file(char* source_file_path, char* target_file_path) {
         }
     }
 
-    //創建新目錄子項
+    
     struct child_file_t new_file;
     memset(&new_file, '\0', sizeof(struct child_file_t));
     strcpy(new_file.filename, target_file_name);
     new_file.inode_number = source_file->number;
-    //寫目錄文件
+    
     unsigned short writing_block = (unsigned short)(target_parent->size / BLOCK_SIZE);
     size_t writing_position =target_parent->size % BLOCK_SIZE;
-    //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+    
     if (writing_block < NADDR - 2) {
         if (writing_position == 0) {
             target_parent->data_address[writing_block] = get_free_data_block();
@@ -654,7 +654,7 @@ void move_file(char* source_file_path, char* target_file_path) {
         source_file->accessed_time = time(NULL);
     }
 
-    //如果為目錄，則改變 .. 的指向
+    
     if ((source_file->mode & 07000) == ISDIR) {
         char *data = (char *)malloc(source_file->size);
         read_data(source_file, data);
@@ -696,15 +696,15 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
         return;
     }
 
-    //創建目錄子項
+    
     struct child_file_t new_link_file;
     memset(&new_link_file, '\0', sizeof(struct child_file_t));
     strcpy(new_link_file.filename, target_file_name);
     new_link_file.inode_number = source_file->number;
-    //寫目錄文件
+    
     unsigned short writing_block = (unsigned short)(target_parent->size / BLOCK_SIZE);
     size_t writing_position =target_parent->size % BLOCK_SIZE;
-    //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+    
     if (writing_block < NADDR - 2) {
         if (writing_position == 0) {
             target_parent->data_address[writing_block] = get_free_data_block();
@@ -743,12 +743,12 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
         printf("mkdir: %s: Illegal filename\n", directory_path);
         return;
     } else {
-        //創建目錄子項
+        
         struct child_file_t directory;
         memset(&directory.filename, '\0', FILE_NAME_LENGTH);
         directory.inode_number = get_free_inode();
         strcpy(directory.filename, directory_name);
-        //初始化 inode
+        
         struct inode_t* inode = get_inode_by_num(directory.inode_number);
         inode->link_count = 1;
         inode->mode = ISDIR + MAX_DIRECTORY_PERMISSION - superblock.umask;
@@ -758,10 +758,10 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
         inode->created_time = time(NULL);
         inode->modified_time = time(NULL);
         inode->accessed_time = time(NULL);
-        //寫目錄文件
+        
         unsigned short writing_block = (unsigned short)(parent_directory->size / BLOCK_SIZE);
         size_t writing_position =parent_directory->size % BLOCK_SIZE;
-        //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+        
         if (writing_block < NADDR - 2) {
             if (writing_position == 0) {
                 parent_directory->data_address[writing_block] = get_free_data_block();
@@ -773,7 +773,7 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
             fseek(disk, (parent_directory->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
             fwrite(&directory, sizeof(struct child_file_t), 1, disk);
             parent_directory->size += sizeof(struct child_file_t);
-            //創建 . .. 目錄
+            
             char* dot_path = (char*)malloc(strlen(directory_name) + 4);
             strcpy(dot_path, directory_name);
             strcat(dot_path, "/.");
@@ -855,12 +855,12 @@ void touch_file(char* path) {
         printf("touch: %s: Illegal filename\n", filename);
         return;
     } else {
-        //創建目錄子項
+        
         struct child_file_t file;
         memset(&file.filename, '\0', FILE_NAME_LENGTH);
         file.inode_number = get_free_inode();
         strcpy(file.filename, filename);
-        //初始化 inode
+        
         struct inode_t* inode = get_inode_by_num(file.inode_number);
         inode->link_count = 1;
         inode->mode = ISREG + MAX_FILE_PERMISSION - superblock.umask;
@@ -870,10 +870,10 @@ void touch_file(char* path) {
         inode->created_time = time(NULL);
         inode->modified_time = time(NULL);
         inode->accessed_time = time(NULL);
-        //寫目錄文件
+        
         unsigned short writing_block = (unsigned short)(parent_directory->size / BLOCK_SIZE);
         size_t writing_position =parent_directory->size % BLOCK_SIZE;
-        //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+        
         if (writing_block < NADDR - 2) {
             if (writing_position == 0) {
                 parent_directory->data_address[writing_block] = get_free_data_block();
@@ -972,4 +972,4 @@ void change_umask(unsigned short new_umask) {
         printf("umask: %o: octal number out of range\n", new_umask);
     }
 }
-#endif /* commands_h */
+#endif

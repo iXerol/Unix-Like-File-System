@@ -229,7 +229,7 @@ unsigned int get_free_inode() {
             return i;
         }
     }
-    return INODE_NUM;   //inode 數量不足
+    return INODE_NUM;   
 }
 
 unsigned int get_free_data_block() {
@@ -248,7 +248,7 @@ unsigned int get_free_data_block() {
         fread(superblock.free_block_stack, sizeof(unsigned int), superblock.stack_size, disk);
     } else {
         printf("There is no enough space to create file.\n");
-        return BLOCK_NUM;   //磁盤容量不足
+        return BLOCK_NUM;   
     }
     return free_data_block;
 }
@@ -313,14 +313,14 @@ bool check_read_permission(struct inode_t* file) {
         return true;
     }
     if (strcmp(file->user, current_user) == 0) {
-        //當前用戶為文件主
+        
         return (file->mode & IRUSR);
     }
     if (strcmp(file->group, current_group) == 0) {
-        //當前用戶組為文件所屬用戶組
+        
         return (file->mode & IRGRP);
     }
-    //當前用戶為其他用戶
+    
     return (file->mode & IROTH);
 }
 
@@ -332,14 +332,14 @@ bool check_write_permission(struct inode_t* file) {
         return true;
     }
     if (strcmp(file->user, current_user) == 0) {
-        //當前用戶為文件主
+        
         return (file->mode & IWUSR);
     }
     if (strcmp(file->group, current_group) == 0) {
-        //當前用戶組為文件所屬用戶組
+        
         return (file->mode & IWGRP);
     }
-    //當前用戶為其他用戶
+    
     return (file->mode & IWOTH);
 }
 
@@ -351,14 +351,14 @@ bool check_execute_permission(struct inode_t* file) {
         return true;
     }
     if (strcmp(file->user, current_user) == 0) {
-        //當前用戶為文件主
+        
         return (file->mode & IXUSR);
     }
     if (strcmp(file->group, current_group) == 0) {
-        //當前用戶組為文件所屬用戶組
+        
         return (file->mode & IXGRP);
     }
-    //當前用戶為其他用戶
+    
     return (file->mode & IXOTH);
 }
 
@@ -431,7 +431,7 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, const char*
 struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
     if (path == NULL) {
         return NULL;
-        //若 path 為空指針，則將 filename 置為空串
+        
     }
     char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
@@ -446,4 +446,4 @@ struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
     }
 }
 
-#endif /* functions_h */
+#endif
