@@ -843,7 +843,7 @@ void touch_file(char* path) {
     } else if (!is_legal_file_name(filename)) {
         printf("touch: %s: Illegal filename\n", filename);
         return;
-    }else {
+    } else {
         //創建目錄子項
         struct child_file_t file;
         memset(&file.filename, '\0', FILE_NAME_LENGTH);

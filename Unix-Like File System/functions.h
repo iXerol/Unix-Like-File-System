@@ -2,7 +2,7 @@
 #define functions_h
 
 #include "variables.h"
-#include "path.h"
+#include "strings.h"
 #include <stdlib.h>
 #include <stdbool.h>
 

@@ -1,5 +1,5 @@
-#ifndef path_h
-#define path_h
+#ifndef strings_h
+#define strings_h
 
 #include <stdlib.h>
 #include <string.h>
@@ -157,4 +157,4 @@ void split_parameters(const char* parameters, char* first_parameter, char* other
     strcpy(other_parameters, parameters + blank_num + i);
 }
 
-#endif /* path_h */
+#endif /* strings_h */

@@ -49,7 +49,116 @@ void UI_login(void);
 void UI_command(void);
 
 void UI_create_user() {
+    int i;
+    char username[USER_NAME_LENGTH * 4];
+    char password1[USER_PASSWORD_LENGTH * 4];
+    char password2[USER_PASSWORD_LENGTH * 4];
+    char group[GROUP_NAME_LENGTH * 4];
 
+    printf("Username:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                username[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            username[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            username[i++] = ch;
+        }
+    }
+
+    printf("Password:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                password1[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            password1[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            password1[i++] = ch;
+        }
+    }
+
+    printf("Retype Password:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                password2[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            password2[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            password2[i++] = ch;
+        }
+    }
+
+    printf("Group:");
+    i = 0;
+    while (1) {
+        char ch;
+        ch = getch();
+        if (ch == '\b') {
+            if (i != 0) {
+                printf("\b \b");
+                i--;
+            }
+            else {
+                group[i] = '\0';
+            }
+        }
+        else if (ch == '\r' || ch == '\n') {
+            group[i] = '\0';
+            printf("\n");
+            break;
+        }
+        else {
+            putchar('*');
+            group[i++] = ch;
+        }
+    }
+    if (strcmp(password1, password2) != 0) {
+        printf("useradd: try again\n");
+    } else {
+        create_user(username, password1, group);
+    }
 }
 
 void UI_change_password() {
