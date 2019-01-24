@@ -197,6 +197,10 @@ void UI_login() {
                 strcpy(current_user, username);
                 strcpy(current_group, tmp_group);
 
+                char user_directory[USER_NAME_LENGTH + 8] = "/home/";
+                strcat(user_directory, username);
+                cd(user_directory);
+                
                 return;
             }
         }

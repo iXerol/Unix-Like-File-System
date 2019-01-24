@@ -46,6 +46,7 @@ void new_volume() {
         strcpy(current_working_directory, "/");
 
         create_directory(root, "/etc");
+        create_directory(root, "/home");
         touch_file("etc/passwd");
         create_user("root", "root", "wheel");
         create_user("ixerol", "123456", "staff");

@@ -91,6 +91,16 @@ void create_user(char* username, char* password, char* group) {
         strcpy(user_data + user_size + USER_NAME_LENGTH + USER_PASSWORD_LENGTH, group);
         erase_data(passwd);
         write_data(passwd, user_data, user_size + USER_DATA_LENGTH);
+
+        //以用戶名義創建用戶主目錄
+        strcpy(current_user, username);
+        strcpy(current_group, group);
+        char user_directory[USER_NAME_LENGTH + 8] = "/home/";
+        strcat(user_directory, username);
+        create_directory(current_working_inode, user_directory);
+
+        strcpy(current_user, "root");
+        strcpy(current_group, "wheel");
     }
 }
 
@@ -496,6 +506,11 @@ void copy_file(char* source_file_path, char* target_file_path) {
         }
     }
 
+    if (!is_legal_file_name(target_file_name)) {
+        printf("cp: %s: Illegal filename\n", target_file_name);
+        return;
+    }
+
     //創建目錄子項
     struct child_file_t new_file;
     memset(&new_file, '\0', sizeof(struct child_file_t));
@@ -583,6 +598,11 @@ void move_file(char* source_file_path, char* target_file_path) {
         }
     }
 
+    if (!is_legal_file_name(target_file_name)) {
+        printf("mv: %s: Illegal filename\n", target_file_name);
+        return;
+    }
+
     //確保新目錄不為舊目錄子目錄
     if (is_descendant_directory(source_file, target_parent)) {
         printf("mv: rename %s to %s: Invalid argument\n", source_file_path, target_file_path);
@@ -645,9 +665,6 @@ void move_file(char* source_file_path, char* target_file_path) {
     }
 }
 
-
-
-
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path) {
     if (target_file_path == NULL || source_file_path == NULL) {
         return;
@@ -664,6 +681,9 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
         return;
     } else if (find_file_from_parent(target_parent, target_file_name) != NULL) {
         printf("ln: %s: File exists\n", target_file_path);
+        return;
+    } else if (!is_legal_file_name(target_file_name)) {
+        printf("ln: %s: Illegal filename\n", target_file_name);
         return;
     }
 
@@ -710,6 +730,9 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
         printf("mkdir: %s: File exists\n", directory_path);
     } else if (strlen(directory_name) > FILE_NAME_LENGTH) {
         printf("%s: Too long directory name\n", directory_path);
+    } else if (!is_legal_file_name(directory_name)) {
+        printf("mkdir: %s: Illegal filename\n", directory_path);
+        return;
     } else {
         //創建目錄子項
         struct child_file_t directory;
@@ -817,7 +840,10 @@ void touch_file(char* path) {
         inode->accessed_time = time(NULL);
     } else if (strlen(filename) > FILE_NAME_LENGTH) {
         printf("%s: Too long file name\n", path);
-    } else {
+    } else if (!is_legal_file_name(filename)) {
+        printf("touch: %s: Illegal filename\n", filename);
+        return;
+    }else {
         //創建目錄子項
         struct child_file_t file;
         memset(&file.filename, '\0', FILE_NAME_LENGTH);
