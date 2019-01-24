@@ -362,7 +362,21 @@ bool check_execute_permission(struct inode_t* file) {
     return (file->mode & IXOTH);
 }
 
+bool is_descendant_directory(struct inode_t* ancestor, struct inode_t* descendant) {
+    if ((ancestor->mode & 07000) != ISDIR || (descendant->mode & 07000) != ISDIR) {
+        return false;
+    }
+    struct inode_t* root = get_inode_by_num(0);
+    if (ancestor == root) {
+        return true;
+    }
 
+    while (descendant != ancestor && descendant != root) {
+        descendant = find_file_from_parent(descendant, "..");
+    }
+
+    return descendant == ancestor;
+}
 
 struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename) {
     if (filename == NULL || directory == NULL || (directory->mode & 07000) != ISDIR) {

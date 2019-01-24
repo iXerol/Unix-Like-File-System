@@ -48,6 +48,9 @@ void new_volume() {
         create_directory(root, "/etc");
         touch_file("etc/passwd");
         create_user("root", "root", "wheel");
+        create_user("ixerol", "123456", "staff");
+        create_user("zero", "123456", "staff");
+        create_user("test", "test", "test");
     }
 }
 

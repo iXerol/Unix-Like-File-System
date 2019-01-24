@@ -38,6 +38,8 @@ void show(void);
 
 void create_user(char* username, char* password, char* group);
 
+void change_password(char* old_password, char* new_password);
+
 void change_mode(char* filename, unsigned short privilege);
 
 void present_working_directory(void);
@@ -437,6 +439,9 @@ void copy_file(char* source_file_path, char* target_file_path) {
     if (source_file == NULL) {
         printf("cp: %s: No such file or directory\n", source_file_path);
         return;
+    } else if ((source_file->mode & 07000) == ISDIR) {
+        printf("cp: %s is a directory (not copied).\n", source_file_path);
+        return;
     } else if (target_parent == NULL) {
         printf("cp: %s: No such file or directory\n", target_file_path);
         return;
@@ -446,13 +451,13 @@ void copy_file(char* source_file_path, char* target_file_path) {
 
     if (target_file != NULL) {
         if ((target_file->mode & 07000) != ISDIR) {
-            printf("ln: %s: File exists\n", target_file_path);
+            printf("cp: %s: File exists\n", target_file_path);
             return;
         } else {
             target_parent = target_file;
             get_file_name(source_file_path, target_file_name);
             if (find_file_from_parent(target_parent, target_file_name) != NULL) {
-                printf("ln: %s/%s: File exists\n", target_file_path, target_file_name);
+                printf("cp: %s/%s: File exists\n", target_file_path, target_file_name);
                 return;
             }
         }
@@ -496,6 +501,115 @@ void copy_file(char* source_file_path, char* target_file_path) {
     char* data = (char*)malloc(source_file->size);
     read_data(source_file, data);
     write_data(new_inode, data, source_file->size);
+}
+
+void move_file(char* source_file_path, char* target_file_path) {
+    if (target_file_path == NULL || source_file_path == NULL) {
+        return;
+    }
+    struct inode_t* source_parent = find_parent(current_working_inode, source_file_path);
+    struct inode_t* source_file;
+    char* source_file_name = (char*)malloc(strlen(source_file_path));
+    get_file_name(source_file_path, source_file_name);
+    if (source_parent == NULL) {
+        printf("mv: %s: No such file or directory\n", source_file_path);
+        return;
+    }
+    source_file = find_file_from_parent(source_parent, source_file_name);
+
+    //路徑最後為 . ..
+    if (strcmp(source_file_name, ".") == 0 || strcmp(source_file_name, "..") == 0) {
+        printf("mv: rename %s to %s: Invalid argument\n", source_file_path, target_file_path);
+    }
+
+    struct inode_t* target_parent = find_parent(current_working_inode, target_file_path);
+    struct inode_t* target_file;
+    char* target_file_name = (char*)malloc(strlen(target_file_path));
+    get_file_name(target_file_path, target_file_name);
+    if (source_file == NULL) {
+        printf("mv: %s: No such file or directory\n", source_file_path);
+        return;
+    } else if (target_parent == NULL) {
+        printf("mv: %s: No such file or directory\n", target_file_path);
+        return;
+    } else {
+        target_file = find_file_from_parent(target_parent, target_file_name);
+    }
+
+    if (target_file != NULL) {
+        if ((target_file->mode & 07000) != ISDIR) {
+            printf("mv: %s: File exists\n", target_file_path);
+            return;
+        } else {
+            target_parent = target_file;
+            get_file_name(source_file_path, target_file_name);
+            if (find_file_from_parent(target_parent, target_file_name) != NULL) {
+                printf("mv: %s/%s: File exists\n", target_file_path, target_file_name);
+                return;
+            }
+        }
+    }
+
+    //確保新目錄不為舊目錄子目錄
+    if (is_descendant_directory(source_file, target_parent)) {
+        printf("mv: rename %s to %s: Invalid argument\n", source_file_path, target_file_path);
+        return;
+    }
+
+    //刪除舊目錄記錄
+    size_t parent_size = source_parent->size;
+    char *source_parent_directory_data = (char *)malloc(parent_size);
+    read_data(source_parent, source_parent_directory_data);
+    struct child_file_t* directory_content = (struct child_file_t*)source_parent_directory_data;
+    for (unsigned i = 0; i < parent_size / sizeof(struct child_file_t); ++i) {
+        if (strcmp(directory_content[i].filename, source_file_name) == 0) {
+            directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t) - 1];
+            erase_data(source_parent);
+            write_data(source_parent, source_parent_directory_data, parent_size - sizeof(struct child_file_t));
+        }
+    }
+
+    //創建新目錄子項
+    struct child_file_t new_file;
+    memset(&new_file, '\0', sizeof(struct child_file_t));
+    strcpy(new_file.filename, target_file_name);
+    new_file.inode_number = source_file->number;
+    //寫目錄文件
+    unsigned short writing_block = (unsigned short)(target_parent->size / BLOCK_SIZE);
+    size_t writing_position =target_parent->size % BLOCK_SIZE;
+    //因為 inode 總數僅 64 個，填滿目錄前四塊直接索引塊需要 64 個子項，因此不可能填滿。
+    if (writing_block < NADDR - 2) {
+        if (writing_position == 0) {
+            target_parent->data_address[writing_block] = get_free_data_block();
+            if (target_parent->data_address[writing_block] == BLOCK_NUM) {
+                return;
+            }
+        }
+        fseek(disk, (target_parent->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
+        fwrite(&new_file, sizeof(struct child_file_t), 1, disk);
+        target_parent->size += sizeof(struct child_file_t);
+        ++source_file->link_count;
+        source_file->accessed_time = time(NULL);
+    }
+
+    //如果為目錄，則改變 .. 的指向
+    if ((source_file->mode & 07000) == ISDIR) {
+        char *data = (char *)malloc(source_file->size);
+        read_data(source_file, data);
+        struct child_file_t* directory_content = (struct child_file_t*)data;
+
+        for (int i = 0; i < source_file->size / sizeof(struct child_file_t); ++i) {
+            if (strcmp(directory_content[i].filename, "..") == 0) {
+                directory_content[i].inode_number = target_parent->number;
+                size_t size = source_file->size;
+                erase_data(source_file);
+                write_data(source_file, data, size);
+
+                --source_parent->link_count;
+                ++target_parent->link_count;
+            }
+        }
+    }
 }
 
 
@@ -631,7 +745,7 @@ void remove_directory(char* path) {
         struct child_file_t* directory_content = (struct child_file_t*)data;
         for (unsigned i = 0; i < parent_size / sizeof(struct child_file_t); ++i) {
             if (strcmp(directory_content[i].filename, filename) == 0) {
-                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t)];
+                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t) - 1];
                 erase_data(parent_directory);
                 write_data(parent_directory, data, parent_size - sizeof(struct child_file_t));
             }
@@ -735,7 +849,7 @@ void remove_regular_file(char* path) {
         struct child_file_t* directory_content = (struct child_file_t*)data;
         for (unsigned i = 0; i < parent_size / sizeof(struct child_file_t); ++i) {
             if (strcmp(directory_content[i].filename, filename) == 0) {
-                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t)];
+                directory_content[i] = directory_content[parent_size / sizeof(struct child_file_t) - 1];
                 erase_data(parent_directory);
                 write_data(parent_directory, data, parent_size - sizeof(struct child_file_t));
             }
