@@ -52,6 +52,7 @@ void new_volume() {
         create_user("ixerol", "123456", "staff");
         create_user("zero", "123456", "staff");
         create_user("test", "test", "test");
+        save();
     }
 }
 

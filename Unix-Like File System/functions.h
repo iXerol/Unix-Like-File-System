@@ -404,9 +404,19 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, const char*
     }
     char* child_file = (char*)malloc(strlen(path));
     char* child_path = (char*)malloc(strlen(path));
+    if (strcmp(path, "~") == 0) {
+        char user_directory[USER_NAME_LENGTH + 8] = "/home/";
+        strcat(user_directory, current_user);
+        return find_file_by_path(working_directory, user_directory);
+    }
     if (path[0] == '/') {
         working_directory = get_inode_by_num(0);
         split_relative_path(path + 1, child_file, child_path);
+    } else if (path[0] == '~' && path[1] == '/') {
+        char user_directory[USER_NAME_LENGTH + 8] = "/home/";
+        strcat(user_directory, current_user);
+        working_directory = find_file_by_path(working_directory, user_directory);
+        split_relative_path(path + 2, child_file, child_path);
     } else {
         split_relative_path(path, child_file, child_path);
     }
@@ -431,7 +441,6 @@ struct inode_t* find_file_by_path(struct inode_t* working_directory, const char*
 struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
     if (path == NULL) {
         return NULL;
-        
     }
     char* last_slash = strrchr(path, '/');
     if (last_slash == NULL) {
