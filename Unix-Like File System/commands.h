@@ -19,7 +19,7 @@
 //
 //😎void rmdir(char* directoryName);
 //
-//void mv(char* pathBefore, char* pathAfter);
+//😎void mv(char* pathBefore, char* pathAfter);
 //
 //😎void cp(char* pathOriginal, char* pathDuplicate);
 //
@@ -42,6 +42,8 @@ void change_password(char* old_password, char* new_password);
 
 void change_mode(char* filename, unsigned short privilege);
 
+void change_owner(char* path, char* user);
+
 void present_working_directory(void);
 
 void list(char* path);
@@ -51,6 +53,8 @@ void status(struct inode_t* directory, char* path);
 void cd(char* path);
 
 void copy_file(char* source_file_path, char* target_file_path);
+
+void move_file(char* source_file_path, char* target_file_path);
 
 void link_file(struct inode_t* working_directory, char* target_file_path, char* source_file_path);
 
@@ -167,10 +171,39 @@ void change_mode(char* path, unsigned short privilege) {
         } else if (!is_owner(file)){
             printf("chmod: Unable to change file mode on %s: Operation not permitted\n", path);
         } else {
-            file->mode = (file->mode & 07000 + privilege);
+            file->mode = (file->mode & 07000) + privilege;
             file->accessed_time = time(NULL);
         }
     }
+}
+
+void change_owner(char* path, char* user) {
+    if (path == NULL || user == NULL) {
+        return;
+    }
+    struct inode_t* inode = find_file_by_path(current_working_inode, path);
+    if (inode == NULL) {
+        printf("chown: %s: No such file or directory\n", path);
+        return;
+    }
+    if (!is_owner(inode)) {
+        printf("chown: %s: Operation not permitted\n", path);
+    }
+
+    struct inode_t* passwd = find_file_by_path(current_working_inode, "/etc/passwd");
+    char* user_data = malloc(passwd->size);
+    read_data(passwd, user_data);
+    char tmp_username[USER_NAME_LENGTH];
+
+    for (size_t i = 0; i < passwd->size / USER_DATA_LENGTH; ++i) {
+        memset(tmp_username, 0, USER_NAME_LENGTH);
+        strncpy(tmp_username, user_data + i * USER_DATA_LENGTH, USER_NAME_LENGTH);
+        if (strcmp(user, tmp_username) == 0) {
+            strcpy(inode->user, user);
+            return;
+        }
+    }
+    printf("chown: %s: illegal user name\n", user);
 }
 
 void present_working_directory() {
@@ -329,7 +362,7 @@ void list(char* path) {
                (inode->mode & IXOTH) != 0 ? 'x' : '-');
 
         printf("%3d ", inode->link_count);
-        printf("%s  %s ", inode->user, inode->group);
+        printf("%10s%10s", inode->user, inode->group);
         printf("%8zu", inode->size);
 
         char time[26];

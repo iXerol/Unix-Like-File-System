@@ -353,10 +353,19 @@ void UI_command() {
                         break;
                     }
                 }
-                if (i == strlen(second_parameter)) {
+                if (i == strlen(first_parameter)) {
                     unsigned short privilege = string_to_octal(first_parameter);
                     change_mode(second_parameter, privilege);
                 }
+            }
+        } else if (start_with(command, "chown", parameters)) {
+            split_parameters(parameters, first_parameter, other_parameters);
+            strcpy(parameters, other_parameters);
+            split_parameters(parameters, second_parameter, other_parameters);
+            if (strcmp(second_parameter, "") == 0) {
+                printf("usage: chown owner file\n");
+            } else {
+                change_owner(second_parameter, first_parameter);
             }
         } else {
             printf("Command not found\n");
