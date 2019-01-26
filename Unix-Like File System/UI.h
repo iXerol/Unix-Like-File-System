@@ -385,7 +385,7 @@ void UI_command() {
             if (strcmp(first_parameter, "") == 0) {
                 printf("usage: rmdir directory\n");
             } else {
-                rmdir(first_parameter);
+                remove_directory(first_parameter);
             }
         } else if (start_with(command, "ln", parameters)) {
             split_parameters(parameters, first_parameter, other_parameters);

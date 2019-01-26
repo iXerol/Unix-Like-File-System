@@ -31,6 +31,8 @@ void link_file(struct inode_t* working_directory, char* target_file_path, char* 
 
 void create_directory(struct inode_t* working_directory, char* directory_path);
 
+void remove_directory(char* path);
+
 void touch_file(char* path);
 
 void resize_text_file(struct inode_t* inode, size_t new_size);
@@ -537,7 +539,6 @@ void copy_file(char* source_file_path, char* target_file_path) {
         fseek(disk, (target_parent->data_address[writing_block] + DATA_BLOCK_START) * BLOCK_SIZE + writing_position, SEEK_SET);
         fwrite(&new_file, sizeof(struct child_file_t), 1, disk);
         target_parent->size += sizeof(struct child_file_t);
-        ++source_file->link_count;
         source_file->accessed_time = time(NULL);
     }
 
@@ -630,6 +631,7 @@ void move_file(char* source_file_path, char* target_file_path) {
             write_data(source_parent, source_parent_directory_data, parent_size - sizeof(struct child_file_t));
         }
     }
+    --source_file->link_count;
 
     //創建新目錄子項
     struct child_file_t new_file;
@@ -787,7 +789,10 @@ void create_directory(struct inode_t* working_directory, char* directory_path) {
 void remove_directory(char* path) {
     if (path == NULL) {
         return;
-    } else if (strcmp(path + strlen(path) - 2, "/.")) {
+    } else if (strcmp(path + strlen(path) - 2, "/.") == 0) {
+        printf("rmdir: %s: Invalid argument\n", path);
+        return;
+    } else if (strcmp(path, ".") == 0) {
         printf("rmdir: %s: Invalid argument\n", path);
         return;
     }
