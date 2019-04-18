@@ -1,7 +1,7 @@
 #ifndef UI_h
 #define UI_h
 
-#include "commands.h"
+#include "file.h"
 #include <assert.h>
 
 #ifdef _WIN32
@@ -309,7 +309,7 @@ void UI_login() {
                 char user_directory[USER_NAME_LENGTH + 8] = "/home/";
                 strcat(user_directory, username);
                 cd(user_directory);
-                
+
                 return;
             }
         }
@@ -495,10 +495,5 @@ void UI_command() {
         save();
     }
 }
-
-
-
-
-
 
 #endif /* UI_h */

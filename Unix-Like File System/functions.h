@@ -22,19 +22,21 @@ void return_inode(unsigned int n);
 
 void return_data_block(unsigned int n);
 
+bool is_owner(struct inode_t* file);
+
 bool check_read_permission(struct inode_t* file);
 
 bool check_write_permission(struct inode_t* file);
 
 bool check_execute_permission(struct inode_t* file);
 
+bool is_descendant_directory(struct inode_t* ancestor, struct inode_t* descendant);
+
 struct inode_t* find_file_from_parent(struct inode_t* directory, char* filename);
 
 struct inode_t* find_file_by_path(struct inode_t* current_inode, const char* path);
 
 struct inode_t* find_parent(struct inode_t* working_directory, char* path);
-
-
 
 void read_data(struct inode_t* inode, char* data) {
     if (inode == NULL || data == NULL) {
@@ -460,4 +462,4 @@ struct inode_t* find_parent(struct inode_t* working_directory, char* path) {
     }
 }
 
-#endif
+#endif /* functions_h */
