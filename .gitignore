@@ -3,3 +3,5 @@ Unix-Like File System.xcodeproj
 Unix-Like File System/a.out
 Unix-Like File System/volume.hex
 Unix-Like File System/main
+Unix-Like File System/.vscode
+*.o
