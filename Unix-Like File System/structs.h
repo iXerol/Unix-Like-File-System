@@ -1,5 +1,6 @@
 #ifndef structs_h
 #define structs_h
+
 #include <time.h>
 #include "consts.h"
 
