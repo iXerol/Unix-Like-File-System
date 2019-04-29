@@ -4,18 +4,18 @@
 #include <stdio.h>
 #include "structs.h"
 
-FILE* disk;
+extern FILE* disk;
 
-struct superblock_t superblock;
+extern struct superblock_t superblock;
 
-struct inode_t inodes[INODE_NUM];
+extern struct inode_t inodes[];
 
-char current_user[32];
+extern char current_user[];
 
-char current_group[32];
+extern char current_group[];
 
-char current_working_directory[FILE_NAME_LENGTH];
+extern char current_working_directory[];
 
-struct inode_t* current_working_inode;
+extern struct inode_t* current_working_inode;
 
 #endif /* variables_h */
