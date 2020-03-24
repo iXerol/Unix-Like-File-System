@@ -1,7 +1,7 @@
 #ifndef consts_h
 #define consts_h
 
-#include <stdint.h>
+#include <stdlib.h>
 
 //單文件最大塊數（4 塊直接，1 塊一級間接，1 塊二級間接）
 #define NADDR 6
