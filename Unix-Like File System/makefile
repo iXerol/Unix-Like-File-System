@@ -1,7 +1,4 @@
-OBJS=strings.o main
-main.o: main.c strings.o
-	clang -o main main.c strings.o
-strings.o: strings.c
-	clang -o strings.o -c strings.c
+main: main.c
+	clang -o main main.c UI.c file.c commands.c functions.c variables.c consts.c strings.c 
 clean:
-	rm $(OBJS)
+	rm main
