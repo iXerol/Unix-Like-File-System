@@ -12,13 +12,13 @@
 //文件名最大長度
 #define FILE_NAME_LENGTH 28
 
-//inode 大小
+//inode 數量
 #define INODE_NUM 64
 
 //用戶名最大長度
 #define USER_NAME_LENGTH 32
 
-//文件类型
+//文件類型
 #define ISREG 00000        //reguler file
 #define ISDIR 01000        //directory
 #define ISCHR 02000        //character device
@@ -75,7 +75,7 @@ extern const unsigned short MAX_DIRECTORY_PERMISSION;
 //默认umask(0022)
 extern const unsigned short DEFAULT_UMASK;
 
-//文件权限
+//文件權限
 extern const unsigned short IRWXU;       //owner has read, write, and execute permission
 extern const unsigned short IRUSR;       //owner has read permission
 extern const unsigned short IWUSR;       //owner has write permission

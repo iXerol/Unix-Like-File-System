@@ -45,10 +45,10 @@ const unsigned short MAX_FILE_PERMISSION = 0777;
 //目錄最大權限
 const unsigned short MAX_DIRECTORY_PERMISSION = 0666;
 
-//默认umask(0022)
+//默認umask(0022)
 const unsigned short DEFAULT_UMASK = 0022;
 
-//文件权限
+//文件權限
 const unsigned short IRWXU = 00700;       //owner has read, write, and execute permission
 const unsigned short IRUSR = 00400;       //owner has read permission
 const unsigned short IWUSR = 00200;       //owner has write permission

@@ -2,16 +2,16 @@
 
 #ifdef _WIN32
 
-#include <conio.h>        //windows中用于不回显字符
+#include <conio.h>        //windows中用於不回顯字符
 
 void UI_clear() {
     system("cls");
-}                            //在 Windows 中调用 cls 命令清屏
+}                            //在 Windows 中調用 cls 命令清屏
 
 #else
 
-#include<termios.h>   //*nix下用于自定义不回显字符
-#include<unistd.h>    //*nix下用于自定义不回显字符
+#include<termios.h>   //*nix下用於自定義不回顯字符
+#include<unistd.h>    //*nix下用於自定義不回顯字符
 
 int getch()
 {
@@ -36,7 +36,7 @@ int getch()
 
 void UI_clear() {
     system("clear");
-}                            //在 *nix 中调用 clear 命令清屏
+}                            //在 *nix 中調用 clear 命令清屏
 
 #endif
 
